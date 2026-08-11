@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>When "Anonymized" Isn't: A Mid-Build Data-Exposure Pivot — Anderson Ballantyne</title>
+<meta name="description" content="A CI fixture passed one anonymization pass and was already public. It still wasn't clean. How I found that out, the mistake I made fixing it, and the two git-history purge techniques I used on purpose." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #FAFAF6; --panel: #FFFFFF; --ink: #191B21; --muted: #63656E; --faint: #8A8C93;
+    --line: #E6E4DC; --accent: #17605A; --accent-2: #0F423E; --tint: #EAF1EE;
+    --warn: #B5502B; --warn-tint: #F7E9E2; --good: #2E7D5B; --good-tint: #E4F1EA;
+    --maxw: 700px; --gutter: clamp(1.2rem, 5vw, 3rem);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: auto; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 17px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding-inline: var(--gutter); }
+  h1, h2, h3 { font-family: "Space Grotesk", sans-serif; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; color: var(--ink); }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--tint); color: var(--accent-2); padding: 0.1em 0.35em; border-radius: 4px; }
+
+  nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: saturate(1.1) blur(6px); border-bottom: 1px solid var(--line); }
+  .nav-inner { display: flex; justify-content: space-between; align-items: center; padding-block: 0.9rem; max-width: var(--maxw); margin: 0 auto; padding-inline: var(--gutter); }
+  .brand { font-family: "Space Grotesk", sans-serif; font-weight: 600; font-size: 15px; color: var(--ink); }
+  .back { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--muted); }
+  .back:hover { color: var(--accent); }
+
+  article { padding-block: clamp(2.5rem, 7vw, 4rem) 5rem; }
+
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .06em; color: var(--accent); text-transform: lowercase; margin-bottom: 1rem; }
+  h1.title { font-size: clamp(1.8rem, 5vw, 2.6rem); margin: 0 0 1rem; max-width: 20ch; }
+  .dek { color: var(--muted); font-size: 1.08rem; max-width: 56ch; margin: 0 0 1.6rem; }
+  .meta { display: flex; gap: 1.2rem; flex-wrap: wrap; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--faint); padding-bottom: 1.6rem; border-bottom: 1px solid var(--line); margin-bottom: 2.2rem; }
+
+  article > .wrap > h2 { font-size: 1.4rem; margin: 2.6rem 0 0.9rem; }
+  article > .wrap > p { margin: 0 0 1.1rem; max-width: 62ch; }
+  article > .wrap > ul, article > .wrap > ol { margin: 0 0 1.1rem; padding-left: 1.4rem; max-width: 62ch; }
+  article > .wrap > ul li, article > .wrap > ol li { margin-bottom: 0.5rem; }
+
+  .callout { border: 1px solid var(--line); border-left: 4px solid var(--accent); background: var(--panel); border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; font-size: 0.95rem; }
+  .callout.warn { border-left-color: var(--warn); background: var(--warn-tint); }
+  .callout.good { border-left-color: var(--good); background: var(--good-tint); }
+  .callout b { color: var(--ink); }
+
+  table.field-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 1rem 0 1.6rem; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  table.field-table th { text-align: left; background: var(--accent); color: #fff; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; padding: 9px 14px; }
+  table.field-table td { padding: 9px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+  table.field-table td.mono { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--accent-2); }
+
+  pre.code { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; line-height: 1.55; margin: 1rem 0 1.4rem; }
+  pre.code .cmt { color: var(--faint); }
+
+  details.diagram { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); margin: 1.4rem 0; }
+  details.diagram summary { cursor: pointer; padding: 0.9rem 1.2rem; font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 0.5rem; }
+  details.diagram summary::-webkit-details-marker { display: none; }
+  details.diagram summary::before { content: "\25B8"; transition: transform 0.15s; display: inline-block; }
+  details.diagram[open] summary::before { transform: rotate(90deg); }
+  details.diagram .diagram-body { padding: 0.2rem 1.2rem 1.2rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+  details.diagram .diagram-body svg { width: 100%; height: auto; display: block; }
+
+  .pull { font-family: "Space Grotesk", sans-serif; font-size: 1.25rem; font-weight: 600; color: var(--accent-2); border-left: 3px solid var(--accent); padding-left: 1rem; margin: 2rem 0; max-width: 52ch; line-height: 1.4; }
+
+  .lessons { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 1.4rem 1.6rem; margin: 1.4rem 0; }
+  .lessons h2 { margin-top: 0 !important; }
+  .lessons ol { padding-left: 1.3rem; }
+  .lessons li { margin-bottom: 0.9rem; }
+  .lessons li b { color: var(--accent-2); }
+
+  .post-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 3rem; padding-top: 1.6rem; border-top: 1px solid var(--line); font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+
+  footer { border-top: 1px solid var(--line); }
+  footer .wrap { padding-block: 1.6rem; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--faint); max-width: var(--maxw); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="../index.html" class="brand">Anderson Ballantyne</a>
+    <a href="../writing.html" class="back">&larr; all writing</a>
+  </div>
+</nav>
+
+<article>
+  <div class="wrap">
+    <span class="kicker">field notes &middot; data governance &middot; build 5</span>
+    <h1 class="title">When "Anonymized" Isn't: A Mid-Build Data-Exposure Pivot</h1>
+    <p class="dek">A 30-row CI fixture had already passed one anonymization pass — a masked ID, a masked email domain — and was already sitting in a public repo. It still wasn't clean. This is the story of finding that out mid-build, the mistake I made while fixing it, and the two different git-history purge techniques I used on purpose, not interchangeably.</p>
+    <div class="meta"><span>SQL_TEST_01 &middot; Build 5</span><span>~9 min read</span></div>
+
+    <p>Build 5 of this project was supposed to be the boring one: wire up a public GitHub repo, add a CI workflow, prove the schema and pipeline build from a genuinely empty environment on every push. Infrastructure work. The kind of build where the interesting part is a green checkmark.</p>
+
+    <p>It didn't stay boring, because about two-thirds of the way through, I asked myself a question I should have asked at the start: <em>should I just mask the whole file, or is the small fixture I already built good enough?</em></p>
+
+    <h2>The fixture that looked fine</h2>
+    <p>The real dataset behind this agent is a genuine equipment-allocation export — 1,535 rows, never committed to the repo, living only on my machine. CI needs <em>something</em> to run against, though, so Phase 1 of Build 5 built a small fixture: 30 real rows, with the allocation ID replaced by fake sequential numbers and the email domain swapped to a fixture-only domain. That felt like anonymization. It passed a glance-test. It got committed and pushed to a public remote.</p>
+
+    <p>Here's what I hadn't actually checked: everything else in those 30 rows was untouched. Real department codes. Real dates and durations. Real equipment descriptions — brand and model, specific enough to identify actual inventory — with only the embedded internal asset-tag numbers scrubbed out.</p>
+
+    <div class="callout warn"><b>The gap wasn't "does this reveal who the institution is."</b> It didn't — the domain was already masked back in an earlier build. The gap was that I'd quietly narrowed "anonymized" down to "not attributable," when the actual bar is broader: no real operational or proprietary data goes public, attributable or not. A masked ID number doesn't anonymize a real department code sitting three columns over.</div>
+
+    <p class="pull">Under the real standard, the fixture that had already passed review — and was already public — failed it.</p>
+
+    <h2>What actually needed to be true</h2>
+    <p>Once the bar was named correctly, the fix couldn't be "mask two more fields in the fixture." Every field needed a deliberate decision: keep it real because it's not proprietary, or replace it because it is. I ended up scrapping the real/fixture split entirely and building one official synthesized dataset instead — <code>data/ALLOCATION-synthesized.csv</code>, matching the real export row-for-row, used identically by local dev, CI, and the eval harness. No separate fixture to ever drift out of sync again.</p>
+
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Treatment</th></tr></thead>
+      <tbody>
+        <tr><td>renewal count, all three dates, duration, resource count</td><td class="mono">kept real, unchanged — nothing proprietary in these alone, and keeping them real means row counts and aggregates still match ground truth</td></tr>
+        <tr><td>allocation ID</td><td class="mono">random unique 7-digit IDs, sampled (not sequential) — categorically different shape from the real 6-digit IDs</td></tr>
+        <tr><td>department code</td><td class="mono">a 1:1 fictional remap, exact distribution and plurality shape preserved; the real&rarr;fake key itself never goes in the public repo</td></tr>
+        <tr><td>email domain</td><td class="mono">institution-specific domain family swapped to a fixture domain; a generic public provider (already present in a handful of real rows) left untouched — it isn't the institution's own domain, so it isn't identifying</td></tr>
+        <tr><td>equipment description</td><td class="mono">fully synthesized from a ~50-item pool spanning the same real categories, different specific brand/model combinations</td></tr>
+      </tbody>
+    </table>
+
+    <p>The department-code mapping is the one piece that can never be public — it's the literal real-to-fake key, and publishing it next to the fake values would let anyone reverse the mask. It lives in two git-ignored, local-only files instead: a human-readable reference and the actual Python module the synthesis script imports at runtime. Same treatment this project already gives its local credentials file.</p>
+
+    <h2>The mistake I made fixing it</h2>
+    <p>This is the part worth being honest about. The first version of the synthesis script hardcoded that department mapping directly as a dictionary in the committed file — the exact mapping that was supposed to stay private, sitting in plain sight in the script meant to protect it. I'd built the "don't leak this" fix by leaking it.</p>
+
+    <div class="callout warn"><b>Caught before it ever left the machine.</b> This project has a standing habit: before anything sensitive gets purged from git history, verify the purge worked with a direct pickaxe search across full history — <code>git log --all -S"&lt;string&gt;"</code> — rather than trusting a tool's own success message. Running that same check on the new script, before pushing, surfaced the hardcoded mapping immediately.</div>
+
+    <p>Because the commit hadn't been shared anywhere yet, the fix didn't need a history rewrite — a plain <code>git commit --amend</code> was safe. I went one step further and pruned the flawed blob out of the local repo entirely:</p>
+
+    <pre class="code">git commit --amend
+git reflog expire --expire=now --all
+git gc --prune=now</pre>
+
+    <p>The lesson generalizes past this one script: <b>a script that exists to protect a secret is itself a place a secret can leak</b>, and it gets exactly the same scrutiny as the data it's protecting — not less, because it's "just tooling."</p>
+
+    <h2>Two purge techniques, used on purpose</h2>
+    <p>By the end of this build, three separate pieces of git history needed rewriting: an earlier, unrelated leak of old (already-rotated) dev credentials; the now-superseded 30-row fixture; and one hypothetical example question in an old build's documentation that happened to quote a real department code. I used two different <code>git filter-repo</code> techniques, deliberately, not interchangeably:</p>
+
+    <ul>
+      <li><b><code>--path ... --invert-paths</code></b> — whole-file removal, used for the fixture CSV. It wasn't being edited, it was being replaced wholesale by the new synthesized dataset, so the entire file's history could go.</li>
+      <li><b><code>--replace-text</code></b> — an in-place string scrub, used for the credential leak and the one leaked department code in an old doc. Both cases needed the file's history to survive; only a specific string inside it needed to disappear.</li>
+    </ul>
+
+    <div class="callout"><b>The choice between them wasn't automatic.</b> Before scrubbing that department code with <code>--replace-text</code>, I checked whether the string was safe to blanket-replace across the whole history — some of this project's department codes are short enough to be substrings of ordinary English or code words that appear constantly in a codebase (one of them, for instance, is a substring of both "transform" and "transaction," words used throughout this project's own source). A blind replace on a colliding string would have silently corrupted unrelated text everywhere it appeared. The one actually being purged didn't collide with anything — confirmed by a full-history search first, not assumed.</div>
+
+    <p>The two shapes, and the check that ran before and after every one of them:</p>
+    <pre class="code"><span class="cmt"># whole-file removal - the file is being replaced, not edited</span>
+git filter-repo --path data/allocations-fixture.csv --invert-paths
+
+<span class="cmt"># in-place string scrub - the file's history needs to survive,
+# only one string inside it doesn't</span>
+git filter-repo --replace-text replacements.txt
+
+<span class="cmt"># the actual check, run before trusting either one - not the tool's
+# own success message, a direct search across full history</span>
+git log --all -S"&lt;the string being purged&gt;"</pre>
+
+    <details class="diagram" open>
+      <summary>View diagram &middot; which purge technique, and why</summary>
+      <div class="diagram-body">
+        <svg viewBox="0 0 640 260" role="img" aria-labelledby="purgeTitle purgeDesc">
+          <title id="purgeTitle">Decision flow for purging a secret from git history</title>
+          <desc id="purgeDesc">Already shared publicly decides amend-vs-filter-repo; whether the file itself needs to survive decides invert-paths-vs-replace-text; a pickaxe search verifies either path before any force-push.</desc>
+          <defs>
+            <marker id="pgArw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </marker>
+          </defs>
+          <rect x="10" y="10" width="150" height="50" rx="8" fill="var(--warn-tint)" stroke="var(--warn)" stroke-width="1" />
+          <text x="85" y="32" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12" font-weight="600" fill="var(--ink)">secret found</text>
+          <text x="85" y="48" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">in git history</text>
+
+          <line x1="160" y1="35" x2="220" y2="35" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#pgArw)" />
+          <text x="190" y="25" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--faint)">shared yet?</text>
+
+          <rect x="220" y="0" width="170" height="46" rx="8" fill="var(--good-tint)" stroke="var(--good)" stroke-width="1" />
+          <text x="305" y="20" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="10.5" fill="var(--ink)">no - local only</text>
+          <text x="305" y="36" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">amend + reflog + gc</text>
+
+          <rect x="220" y="60" width="170" height="46" rx="8" fill="var(--warn-tint)" stroke="var(--warn)" stroke-width="1" />
+          <text x="305" y="80" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="10.5" fill="var(--ink)">yes - already public</text>
+          <text x="305" y="96" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">git filter-repo</text>
+
+          <line x1="390" y1="83" x2="440" y2="83" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#pgArw)" />
+          <text x="415" y="73" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--faint)">file itself?</text>
+
+          <rect x="440" y="45" width="190" height="46" rx="8" fill="var(--panel)" stroke="var(--warn)" stroke-width="1" />
+          <text x="535" y="63" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="10" fill="var(--ink)">being replaced whole</text>
+          <text x="535" y="80" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">--invert-paths</text>
+
+          <rect x="440" y="100" width="190" height="46" rx="8" fill="var(--panel)" stroke="var(--warn)" stroke-width="1" />
+          <text x="535" y="118" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="10" fill="var(--ink)">must survive intact</text>
+          <text x="535" y="135" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">--replace-text</text>
+
+          <line x1="305" y1="106" x2="305" y2="150" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#pgArw)" />
+          <line x1="535" y1="146" x2="305" y2="176" stroke="var(--muted)" stroke-width="1.4" />
+          <rect x="150" y="176" width="310" height="50" rx="8" fill="var(--tint)" stroke="var(--accent)" stroke-width="1.4" />
+          <text x="305" y="198" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12" font-weight="600" fill="var(--accent-2)">git log --all -S string</text>
+          <text x="305" y="215" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">verify by searching, not by trusting the exit code</text>
+        </svg>
+      </div>
+    </details>
+
+    <p>Two of the three rewrites also required a force-push, since real commits had already reached the public remote and history had diverged. Both were confirmed explicitly before running, and each rewrite was preceded by a full local backup bundle, kept outside the repository entirely — the exact place you don't want to discover a backup is missing.</p>
+
+    <h2>The part that surprised me</h2>
+    <p>Rebuilding the dataset properly turned out to fix something unrelated for free. A separate eval suite had three test cases that had never fully worked in CI. Two of them turned out to depend on values the new synthetic dataset preserved exactly — a department plurality count and a renewal-count total, both untouched by the rebuild — so they just started passing. The third genuinely couldn't work in CI, but for a different reason than I'd originally assumed: it expected a scratch table saved by an earlier eval case to still exist, but that case's own cleanup step correctly dropped the table right after using it. A local "pass" I'd seen earlier turned out to be a false positive — a leftover table from unrelated manual testing months earlier happened to satisfy the check by coincidence. Once I understood the real cause, the fix was a small, honest one: skip that specific case in CI with an explicit flag, rather than let it fail unpredictably or pass on a coincidence nobody could see.</p>
+
+    <div class="lessons">
+      <h2>What I'd tell someone doing this for the first time</h2>
+      <ol>
+        <li><b>Name the actual bar before you build against it.</b> "Anonymized" quietly narrowed to "not attributable to the institution" without anyone deciding that on purpose. The real requirement — no real operational data public, period — was broader, and the fixture had already failed it while looking fine.</li>
+        <li><b>The tool that protects a secret gets the same scrutiny as the secret.</b> The leak wasn't in the data this time; it was in the script written to mask the data.</li>
+        <li><b>Verify a purge by searching, not by trusting the tool's exit code.</b> A direct pickaxe search across full history is what actually caught both leaks in this build — the original credentials and the hardcoded mapping.</li>
+        <li><b>Not every history rewrite is the same operation.</b> Removing a superseded file and scrubbing one string out of a file that needs to survive are different techniques with different risk profiles — check for string collisions before a blanket replace, don't assume.</li>
+        <li><b>A document describing a leak can itself leak the same thing.</b> The most tempting place to accidentally reproduce a purged secret is the write-up explaining how you purged it — this post included. Anything narrating a redaction gets swept for the same strings it's narrating, on purpose, every time.</li>
+      </ol>
+    </div>
+
+    <div class="post-nav">
+      <a href="../writing.html">&larr; back to the build log</a>
+      <a href="../index.html">portfolio &#8599;</a>
+    </div>
+  </div>
+</article>
+
+<footer>
+  <div class="wrap">
+    <span>&copy; 2026 Anderson Ballantyne</span>
+  </div>
+</footer>
+
+</body>
+</html>

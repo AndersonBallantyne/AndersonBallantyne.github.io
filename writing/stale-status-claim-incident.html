@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>A Wrong "Still Unresolved," a Self-Caught Cost Regression, and a Verifier That Learned to Say "Verify Further" — Anderson Ballantyne</title>
+<meta name="description" content="One day, three findings: a truncated chunk made a fixed incident look open, the quick fix for it blew one question's cost to 202,821 tokens before it ever shipped, and a verifier that couldn't tell a legitimate history-carryover from a fabrication learned to say so honestly instead of guessing." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #FAFAF6; --panel: #FFFFFF; --ink: #191B21; --muted: #63656E; --faint: #8A8C93;
+    --line: #E6E4DC; --accent: #17605A; --accent-2: #0F423E; --tint: #EAF1EE;
+    --warn: #B5502B; --warn-tint: #F7E9E2; --good: #2E7D5B; --good-tint: #E4F1EA;
+    --maxw: 700px; --gutter: clamp(1.2rem, 5vw, 3rem);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: auto; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 17px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding-inline: var(--gutter); }
+  h1, h2, h3 { font-family: "Space Grotesk", sans-serif; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; color: var(--ink); }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--tint); color: var(--accent-2); padding: 0.1em 0.35em; border-radius: 4px; }
+
+  nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: saturate(1.1) blur(6px); border-bottom: 1px solid var(--line); }
+  .nav-inner { display: flex; justify-content: space-between; align-items: center; padding-block: 0.9rem; max-width: var(--maxw); margin: 0 auto; padding-inline: var(--gutter); }
+  .brand { font-family: "Space Grotesk", sans-serif; font-weight: 600; font-size: 15px; color: var(--ink); }
+  .back { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--muted); }
+  .back:hover { color: var(--accent); }
+
+  article { padding-block: clamp(2.5rem, 7vw, 4rem) 5rem; }
+
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .06em; color: var(--accent); text-transform: lowercase; margin-bottom: 1rem; }
+  h1.title { font-size: clamp(1.7rem, 5vw, 2.5rem); margin: 0 0 1rem; max-width: 24ch; }
+  .dek { color: var(--muted); font-size: 1.08rem; max-width: 60ch; margin: 0 0 1.6rem; }
+  .meta { display: flex; gap: 1.2rem; flex-wrap: wrap; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--faint); padding-bottom: 1.6rem; border-bottom: 1px solid var(--line); margin-bottom: 2.2rem; }
+
+  article > .wrap > h2 { font-size: 1.4rem; margin: 2.6rem 0 0.9rem; }
+  article > .wrap > p { margin: 0 0 1.1rem; max-width: 62ch; }
+  article > .wrap > ul, article > .wrap > ol { margin: 0 0 1.1rem; padding-left: 1.4rem; max-width: 62ch; }
+  article > .wrap > ul li, article > .wrap > ol li { margin-bottom: 0.5rem; }
+
+  .callout { border: 1px solid var(--line); border-left: 4px solid var(--accent); background: var(--panel); border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; font-size: 0.95rem; }
+  .callout.warn { border-left-color: var(--warn); background: var(--warn-tint); }
+  .callout.good { border-left-color: var(--good); background: var(--good-tint); }
+  .callout b { color: var(--ink); }
+
+  table.field-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 1rem 0 1.6rem; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  table.field-table th { text-align: left; background: var(--accent); color: #fff; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; padding: 9px 14px; }
+  table.field-table td { padding: 9px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+  table.field-table td.mono { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--accent-2); }
+  table.field-table td.num { font-family: "IBM Plex Mono", monospace; font-size: 12px; text-align: right; white-space: nowrap; }
+  .table-note { font-size: 0.82rem; color: var(--faint); margin: -0.8rem 0 1.6rem; max-width: 62ch; }
+
+  .pull { font-family: "Space Grotesk", sans-serif; font-size: 1.25rem; font-weight: 600; color: var(--accent-2); border-left: 3px solid var(--accent); padding-left: 1rem; margin: 2rem 0; max-width: 52ch; line-height: 1.4; }
+
+  pre.code { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; line-height: 1.55; margin: 1rem 0 1.4rem; }
+  pre.code .cmt { color: var(--faint); }
+
+  details.diagram { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); margin: 1.4rem 0; }
+  details.diagram summary { cursor: pointer; padding: 0.9rem 1.2rem; font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 0.5rem; }
+  details.diagram summary::-webkit-details-marker { display: none; }
+  details.diagram summary::before { content: "\25B8"; transition: transform 0.15s; display: inline-block; }
+  details.diagram[open] summary::before { transform: rotate(90deg); }
+  details.diagram .diagram-body { padding: 0.2rem 1.2rem 1.2rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+  details.diagram .diagram-body svg { width: 100%; height: auto; display: block; }
+
+  .lessons { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 1.4rem 1.6rem; margin: 1.4rem 0; }
+  .lessons h2 { margin-top: 0 !important; }
+  .lessons ol { padding-left: 1.3rem; }
+  .lessons li { margin-bottom: 0.7rem; }
+  .lessons li b { color: var(--accent-2); }
+
+  .post-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 3rem; padding-top: 1.6rem; border-top: 1px solid var(--line); font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+
+  footer { border-top: 1px solid var(--line); }
+  footer .wrap { padding-block: 1.6rem; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--faint); max-width: var(--maxw); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="../index.html" class="brand">Anderson Ballantyne</a>
+    <a href="../writing.html" class="back">&larr; all writing</a>
+  </div>
+</nav>
+
+<article>
+  <div class="wrap">
+    <span class="kicker">field notes &middot; agent reliability &middot; verifier design</span>
+    <h1 class="title">A Wrong "Still Unresolved," and a Verifier That Learned to Say "Verify Further"</h1>
+    <p class="dek">A truncated chunk made an already-fixed incident look open again. The quick fix for that was correct and still blew one question's cost to 202,821 tokens before it ever shipped — caught by re-testing, not by luck. The real fix turned out to be a data-pipeline gap, not a smarter prompt. Later the same day, a completely different verifier gap surfaced: a genuinely correct answer flagged as unsupported, not because it was wrong, but because the check meant to confirm it structurally couldn't see the evidence that made it right.</p>
+    <div class="meta"><span>SQL_TEST_01 &middot; Builds 7 follow-ups</span><span>~7 min read</span></div>
+
+    <p>This project's agent answers questions about an equipment-checkout database and its own build history by writing SQL and searching its own documentation. A second agent — the verifier — checks every answer against the tool evidence gathered for it before showing a green or red badge. Both had been running in production for days. A routine verification pass — re-asking questions that should already be settled, just to confirm they still were — is what started this.</p>
+
+    <h2>Finding 1 &middot; a fixed incident, reported as still broken</h2>
+    <p>Two live answers, asked days apart, both confidently called an already-resolved deployment gap from an earlier incident <b>"still unresolved."</b> It wasn't. The real root cause: this project caps every tool-result field at 500 characters before it reaches the model, and the source documentation chunk describing that incident's resolution got cut off <em>right before the word "Fixed."</em> The model was reading a truncated sentence and reporting exactly what it said — a genuinely grounded answer, built from data that had been silently cut off mid-sentence.</p>
+    <div class="callout warn"><b>The quick fix, and what it cost:</b> a caution rule — don't conclude a negative status from a chunk that looks truncated, verify further if unsure — restored correctness. Tested against the two known-bad questions, it worked. Tested more broadly, it reintroduced an anti-pattern from a separate incident days earlier: a soft, open-ended "keep searching if unsure" instruction with no bounded action caused the model to chase the truncated evidence through repeated re-queries. One question's cost went from 41,417 to <b>202,821 tokens</b> — worse than doing nothing.</div>
+    <p class="pull">Caught by re-testing before calling it done, not after shipping it.</p>
+    <p>The fix that actually held moved the caution rule from an instruction ("verify further") to data: a consolidated, always-current "Known Open &amp; Deferred Items" table, so a status question never has to re-derive an answer by searching in the first place. But that only fixed the two questions that had actually been tested. A closer look at the underlying data found the real shape of the problem: <b>127 of roughly 532 documentation chunks</b> already exceeded the 500-character cap — some by over 6,000 characters — because the extraction pipeline that built them had never enforced a size limit at all. The truncated incident chunk wasn't a one-off; it was one instance of a pipeline gap that could resurface anywhere, on any question, at any time.</p>
+    <div class="callout good"><b>The real fix:</b> chunk-splitting moved to extraction time — any chunk over 450 characters now gets broken up on sentence (falling back to word) boundaries before it's ever stored, so nothing downstream can be long enough for the 500-character cap to cut off mid-fact. Re-ran the real extraction: 532 chunks became 769, and zero exceed the cap, dataset-wide. Final re-test on both original questions: correct, at 15,491 and 18,992 tokens — cheaper than the very first attempt, not just cheaper than the regression.</div>
+
+    <p>The actual truncation, and the boundary that used to sit past it:</p>
+    <pre class="code"><span class="cmt"># tools.py - the cap that was always there</span>
+MAX_FIELD_CHARS = 500  <span class="cmt"># applied to every tool-result field</span>
+
+<span class="cmt"># the source chunk, before this fix (real text, cut mid-sentence)</span>
+"...the deployment-verification gap from 2026-08-07 was
+ traced to a stale Streamlit process and"[truncated, 743 total chars]
+<span class="cmt"># the word "Fixed" was 40 characters past the cut</span>
+
+<span class="cmt"># extract_doc_chunks.py - the fix, applied once at extraction time</span>
+CHUNK_SPLIT_TARGET_CHARS = 450
+chunks = [piece for chunk in chunks for piece in _split_long_text(chunk)]
+<span class="cmt"># splits on sentence boundaries, falls back to word boundaries -
+# no chunk this pipeline produces can reach MAX_FIELD_CHARS again</span></pre>
+
+    <details class="diagram" open>
+      <summary>View diagram &middot; how a truncated fact becomes a wrong claim</summary>
+      <div class="diagram-body">
+        <svg viewBox="0 0 640 220" role="img" aria-labelledby="truncTitle truncDesc">
+          <title id="truncTitle">Truncation flow: before and after the extraction-time fix</title>
+          <desc id="truncDesc">Before, a long chunk gets cut at 500 characters at query time, sometimes mid-fact, and the model reports the truncated fragment as if complete. After, chunks are split to fit under the cap at extraction time, before they're ever stored.</desc>
+          <defs>
+            <marker id="trArw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </marker>
+          </defs>
+          <text x="12" y="24" font-family="'IBM Plex Mono', monospace" font-size="11" fill="var(--warn)">before &middot; cap applied at query time</text>
+          <rect x="10" y="34" width="150" height="50" rx="8" fill="var(--panel)" stroke="var(--warn)" stroke-width="1" />
+          <text x="85" y="55" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12" font-weight="600" fill="var(--ink)">long chunk</text>
+          <text x="85" y="72" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">743 chars, no limit</text>
+          <line x1="160" y1="59" x2="215" y2="59" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#trArw)" />
+          <rect x="215" y="34" width="150" height="50" rx="8" fill="var(--warn-tint)" stroke="var(--warn)" stroke-width="1.4" />
+          <text x="290" y="55" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12" font-weight="600" fill="var(--ink)">cut at 500</text>
+          <text x="290" y="72" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">40 chars before "Fixed"</text>
+          <line x1="365" y1="59" x2="420" y2="59" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#trArw)" />
+          <rect x="420" y="34" width="200" height="50" rx="8" fill="var(--warn-tint)" stroke="var(--warn)" stroke-width="1.4" />
+          <text x="520" y="55" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12" font-weight="600" fill="var(--ink)">"still unresolved"</text>
+          <text x="520" y="72" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">wrong, but grounded in what it saw</text>
+
+          <text x="12" y="130" font-family="'IBM Plex Mono', monospace" font-size="11" fill="var(--good)">after &middot; split at extraction time</text>
+          <rect x="10" y="140" width="150" height="50" rx="8" fill="var(--panel)" stroke="var(--good)" stroke-width="1" />
+          <text x="85" y="161" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12" font-weight="600" fill="var(--ink)">long chunk</text>
+          <text x="85" y="178" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">743 chars</text>
+          <line x1="160" y1="165" x2="215" y2="165" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#trArw)" />
+          <rect x="215" y="140" width="150" height="50" rx="8" fill="var(--good-tint)" stroke="var(--good)" stroke-width="1.4" />
+          <text x="290" y="161" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12" font-weight="600" fill="var(--ink)">split at 450</text>
+          <text x="290" y="178" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">sentence/word boundary</text>
+          <line x1="365" y1="165" x2="420" y2="165" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#trArw)" />
+          <rect x="420" y="140" width="200" height="50" rx="8" fill="var(--good-tint)" stroke="var(--good)" stroke-width="1.4" />
+          <text x="520" y="161" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12" font-weight="600" fill="var(--ink)">whole fact preserved</text>
+          <text x="520" y="178" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">"Fixed" never cut off again</text>
+        </svg>
+      </div>
+    </details>
+
+    <h2>Finding 2 &middot; a genuinely correct answer, flagged as unsupported</h2>
+    <p>Sample browser testing of a new feature turned up a case that looked, at first glance, like a bad answer: a follow-up question listed eleven columns for a database table, but the verifier's own evidence for that specific question showed only a row count — no column query at all. Red badge, plausible-looking bug.</p>
+    <p>It wasn't a bug in the answer. Checking the actual log: the same table's columns had been queried for real, correctly, about 50 seconds earlier in the same conversation — still sitting in the tiered conversation memory the model actually had open when it answered. The model reused a real fact it had genuinely retrieved. The verifier's own evidence, though, is scoped strictly to <em>that one question's</em> fresh tool calls — it has no visibility into anything gathered in an earlier round, even a round the model's own context window still held.</p>
+    <table class="field-table">
+      <thead><tr><th>Option considered</th><th>Why it wasn't the fix</th></tr></thead>
+      <tbody>
+        <tr><td>Expand the verifier's evidence to the last few rounds</td><td class="mono">Real cost growth on every check, and risks verifying against evidence the model's own context window may not have actually included — a different kind of ungrounded check.</td></tr>
+        <tr><td>Flatten the entire conversation into the verifier's evidence</td><td class="mono">Unbounded growth as a session gets longer — the exact anti-pattern behind a 176,252-token conversation-memory bug from a separate incident, reintroduced in a new place.</td></tr>
+        <tr><td>Teach the verifier to phrase uncertainty honestly</td><td class="mono">Cheap, bounded, no schema or logging changes — the one actually shipped.</td></tr>
+      </tbody>
+    </table>
+    <p>The fix that shipped taught the verifier something narrower and more honest: from a single question's evidence alone, it genuinely can't tell a claim that was fabricated apart from one that was correctly carried over from a moment earlier in the conversation — both simply look like "not in what I can see." What it <em>can</em> tell apart is whether a claim actively <b>contradicts</b> the evidence in front of it, versus one the evidence merely doesn't confirm or deny. A direct contradiction keeps the sharp, unqualified "unsupported." A claim that isn't in the evidence but doesn't conflict with it either now gets the verdict's reason prefixed <code>"Verify further:"</code>, naming exactly what can't be confirmed — honest about the limits of a single-shot check, instead of implying the claim is simply wrong.</p>
+
+    <pre class="code"><span class="cmt"># verify_answer.py - VERIFIER_SYSTEM_PROMPT, the actual addition</span>
+"""
+Not every unbacked claim is a contradiction, though. This evidence
+set only covers tool calls made for this specific question - it has
+no visibility into earlier turns of the same conversation. [...]
+For that specific case, still set supported=false, but start reason
+with "Verify further:" and name exactly which claim(s) can't be
+confirmed from this evidence, rather than declaring them wrong
+outright.
+"""
+<span class="cmt"># supported stays a plain boolean either way - only reason changes,
+# so no schema, logging, or UI code needed to change</span></pre>
+
+    <div class="callout good"><b>Re-verified on the exact real case:</b> the badge still reads unsupported (this check still can't confirm the claim from what it was given), but the reason now says <em>"Verify further: &hellip; which has no visibility into any earlier schema queries that may have been run"</em> — not a claim that the answer is wrong. All five existing regression cases, including a hard-contradiction case built specifically to stay unqualified, still pass with the new wording.</div>
+
+    <h2>Same day, in brief</h2>
+    <p>Three smaller pieces closed out the same day, each triggered directly by one of the findings above rather than planned in advance:</p>
+    <ul>
+      <li><b>Scratch-workspace cleanup.</b> The agent's writable scratch tables had no lifecycle policy at all. Built collaboratively over several rounds of design questions rather than decided solo: two-tier staleness (worth mentioning at 7 days, actually offered for deletion at 30), deletion reachable only through a real UI button click — never an agent tool call, so it never depends on a chat reply counting as consent — and a follow-up gap (what if someone wants a table gone <em>immediately</em>, not after 30 days?) closed the same day it was raised, with the age gate still fully enforced for every other path.</li>
+      <li><b>Isolating which tool call causes a token spike.</b> The Anthropic API only reports token usage per API turn, never per tool call, and a single turn can make more than one call at once — confirmed live, a two-call turn shares one usage number. Result size (characters) turned out to be the right proxy instead: exactly attributable to the one call that produced it, no cross-turn ambiguity, the same technique this project already uses elsewhere to keep individual fields from ballooning a question's cost.</li>
+      <li><b>A documentation rewrite that found two more pipeline bugs.</b> Swapping a rewritten project-overview page into the documentation search index surfaced a second real extraction gap: bullet lists and a structured build summary weren't recognized by any existing extraction rule, so the swap silently indexed 3 of the page's 21 real chunks. Fixed with a new extraction rule for that content shape. Separately, removing the old page from the index left its rows behind with no cleanup path — the same "orphaned rows" shape a much earlier repo audit had already found once, in a different corner of the project.</li>
+    </ul>
+
+    <div class="lessons">
+      <h2>The throughline</h2>
+      <p style="margin:0 0 1rem;">Two different failure classes, the same underlying move both times: when a check can only see part of the picture, the honest fix is to say so precisely, not to guess harder or search more. A truncated chunk isn't proof of a negative status — it's proof of nothing, and the fix was admitting that as data, not chasing the missing tail with more queries. A verifier with no visibility into an earlier round isn't proof an answer is wrong — it's proof of a blind spot, and the fix was naming that blind spot in the verdict's own language instead of expanding the check's reach at real cost.</p>
+      <ol>
+        <li><b>A caution rule with no bounded action is a liability, not a safeguard.</b> "Verify further" told the model to keep searching, with no limit — the same anti-pattern this project had already named and moved away from once, three days earlier, in an unrelated fix.</li>
+        <li><b>Fix the mechanism, not the instance.</b> A prompt rule for two known-bad questions is a patch. Finding that 127 other chunks shared the same silent risk, and closing the pipeline gap that let any of them exist, is the actual fix.</li>
+        <li><b>"Unsupported" and "genuinely wrong" aren't the same claim.</b> A check with incomplete evidence should say what it can't confirm, not imply the thing it can't confirm is false.</li>
+        <li><b>Cheap, bounded, and honest beats broad and expensive.</b> Every alternative considered for the verifier gap would have made every future check more costly to fix one specific case. A wording change fixed the actual problem — miscommunicating certainty — for free.</li>
+      </ol>
+    </div>
+
+    <p>Full timestamped accounts — every question, every fix, every token count, in order — are in the project repo: the <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/2026-08-10-stale-status-claim-incident-audit.html" target="_blank" rel="noopener">2026-08-10 incident audit</a> covers Finding 1 in full, and the living <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/sql-test-01-cheatsheet.html" target="_blank" rel="noopener">command reference</a> documents the verifier change and everything in "same day, in brief."</p>
+
+    <div class="post-nav">
+      <a href="../writing.html">&larr; back to the build log</a>
+      <a href="../index.html">portfolio &#8599;</a>
+    </div>
+  </div>
+</article>
+
+<footer>
+  <div class="wrap">
+    <span>&copy; 2026 Anderson Ballantyne</span>
+  </div>
+</footer>
+
+</body>
+</html>

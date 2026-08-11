@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Anderson Ballantyne — data systems &amp; AI tooling</title>
+<meta content="I build reliable data systems and the AI tooling that runs on top of them." name="description"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --paper:   #FAFAF6;
+    --panel:   #FFFFFF;
+    --ink:     #191B21;
+    --muted:   #63656E;
+    --faint:   #8A8C93;
+    --line:    #E6E4DC;
+    --accent:  #17605A;
+    --accent-2:#0F423E;
+    --tint:    #EAF1EE;
+    --maxw: 860px;
+    --gutter: clamp(1.2rem, 5vw, 3rem);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: auto; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 17px; line-height: 1.7; -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding-inline: var(--gutter); }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .06em;
+    color: var(--accent); text-transform: lowercase; display: block; margin-bottom: 1rem;
+  }
+  .eyebrow::before { content: "-- "; color: var(--faint); }
+  .eyebrow.mt { margin-top: 2.4rem; }
+
+  h1, h2, h3 { font-family: "Space Grotesk", sans-serif; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; }
+
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter: saturate(1.1) blur(6px); border-bottom: 1px solid var(--line);
+  }
+  .nav-inner { display: flex; justify-content: space-between; align-items: center; padding-block: 0.9rem; }
+  .brand { font-family: "Space Grotesk", sans-serif; font-weight: 600; font-size: 16px; color: var(--ink); }
+  .brand:hover { text-decoration: none; }
+  .nav-links { display: flex; gap: 1.4rem; font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+  .nav-links a { color: var(--muted); }
+  .nav-links a:hover { color: var(--accent); text-decoration: none; }
+  @media (max-width: 560px) { .nav-links { display: none; } }
+
+  section { padding-block: clamp(3rem, 8vw, 5.5rem); }
+  section + section { border-top: 1px solid var(--line); }
+
+  .hero h1 { font-size: clamp(2rem, 6.5vw, 3.4rem); font-weight: 700; margin: 0 0 1.2rem; max-width: 18ch; }
+  .hero .accentword { color: var(--accent); }
+  .cursor {
+    display: inline-block; width: 0.6ch; height: 1em; transform: translateY(0.12em);
+    background: var(--accent); margin-left: 2px; animation: blink 1.15s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  .hero .lede { color: var(--muted); font-size: 1.05rem; max-width: 58ch; margin: 0 0 2rem; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .btn {
+    font-family: "IBM Plex Mono", monospace; font-size: 14px; font-weight: 500;
+    padding: 0.65rem 1.2rem; border-radius: 8px; border: 1px solid var(--accent);
+    display: inline-flex; align-items: center; gap: 0.5rem; transition: background .15s, color .15s;
+  }
+  .btn:hover { text-decoration: none; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-2); }
+  .btn-ghost { background: transparent; color: var(--accent); }
+  .btn-ghost:hover { background: var(--tint); }
+  .btn-sm { font-size: 13px; padding: 0.5rem 1rem; }
+
+  /* ---- project overview (up front) ---- */
+  .overview-list { list-style: none; margin: 0 0 1.6rem; padding: 0; }
+  .overview-list li {
+    position: relative; padding-left: 22px; margin-bottom: 0.85rem;
+    color: var(--muted); font-size: 0.96rem; max-width: 66ch; line-height: 1.6;
+  }
+  .overview-list li::before {
+    content: ""; position: absolute; left: 0; top: 8px;
+    width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+  }
+  .overview-list li b { color: var(--ink); }
+  .overview-stats { margin: 1.4rem 0 2.2rem; }
+  #overview h3 { font-size: 1.05rem; margin: 2rem 0 1rem; }
+  #overview > .wrap > p { max-width: 66ch; color: var(--ink); }
+
+  /* ---- flagship record ---- */
+  .record { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .record-title { font-size: 1.35rem; margin: 0; padding: 1.3rem 1.4rem 0.2rem; }
+  .badge-status {
+    display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 500;
+    padding: 2px 9px; border-radius: 6px; background: var(--tint); color: var(--accent-2);
+    border: 1px solid var(--accent); vertical-align: middle; margin-left: 10px; letter-spacing: .03em;
+  }
+  .record-sub { color: var(--muted); font-size: 0.95rem; padding: 0 1.4rem 1.1rem; margin: 0; }
+  .record-figure { margin: 0; padding: 1.2rem 1.4rem 1.3rem; border-top: 1px solid var(--line); background: var(--paper); }
+  .record-figure svg { width: 100%; height: auto; display: block; }
+  .record-figure figcaption { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--faint); margin-top: 0.7rem; }
+  .field { display: grid; grid-template-columns: 128px 1fr; gap: 1rem; padding: 0.85rem 1.4rem; border-top: 1px solid var(--line); }
+  .field-key { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--faint); padding-top: 2px; }
+  .field-val { font-size: 0.97rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--accent-2); background: var(--tint); border-radius: 7px; padding: 0.25rem 0.6rem; }
+  .record-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; padding: 1.1rem 1.4rem 1.3rem; border-top: 1px solid var(--line); }
+  @media (max-width: 560px) { .field { grid-template-columns: 1fr; gap: 0.35rem; } }
+
+  /* ---- component project grid ---- */
+  .work-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 640px) { .work-grid { grid-template-columns: 1fr; } }
+  .proj { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 1.2rem 1.3rem; display: flex; flex-direction: column; }
+  .proj h3 { font-size: 1.08rem; margin: 0 0 0.45rem; }
+  .proj .build-no { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--faint); display: block; margin-bottom: 0.3rem; }
+  .proj > p { font-size: 0.93rem; color: var(--muted); margin: 0 0 0.9rem; line-height: 1.55; flex: 1; }
+  .proj .chips { margin-bottom: 0.9rem; }
+  .proj .links { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; }
+  .proj .links a { color: var(--accent); }
+
+  /* ---- writing index ---- */
+  .writing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 640px) { .writing-grid { grid-template-columns: 1fr; } }
+  .post { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 1.2rem 1.3rem; display: block; transition: border-color .15s; }
+  .post:hover { border-color: var(--accent); text-decoration: none; }
+  .post .tag { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--faint); }
+  .post h3 { font-size: 1.05rem; margin: 0.4rem 0 0.5rem; color: var(--ink); }
+  .post .kw { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--muted); }
+  .post .more { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--accent); margin-top: 0.7rem; }
+  .post.featured { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 0.2rem; border-color: var(--accent); background: var(--tint); }
+  .writing-cta { margin-top: 1.2rem; font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+
+  /* ---- about + contact ---- */
+  .about p { max-width: 60ch; color: var(--ink); }
+  .about .sig { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--muted); margin-top: 1.2rem; }
+  .contact h2 { font-size: clamp(1.5rem, 4vw, 2.1rem); margin: 0 0 1.2rem; max-width: 18ch; }
+  .contact .note { color: var(--muted); font-size: 0.95rem; max-width: 50ch; margin: 0 0 1.4rem; }
+  .social { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--muted); margin-top: 1.4rem; }
+  .social a { color: var(--muted); }
+  .social a:hover { color: var(--accent); }
+
+  footer { border-top: 1px solid var(--line); }
+  footer .wrap { padding-block: 1.6rem; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--faint); }
+</style>
+</head>
+<body>
+<nav>
+<div class="wrap nav-inner">
+<a class="brand" href="#top">Anderson Ballantyne</a>
+<div class="nav-links">
+<a href="#overview">overview</a>
+<a href="#work">work</a>
+<a href="writing.html">writing</a>
+<a href="#about">about</a>
+<a href="#contact">contact</a>
+</div>
+</div>
+</nav>
+<main id="top">
+<section class="hero">
+<div class="wrap">
+<span class="eyebrow">whoami</span>
+<h1>I build reliable <span class="accentword">data systems</span> — and the <span class="accentword">AI tooling</span> that runs on top of them.<span aria-hidden="true" class="cursor"></span></h1>
+<p class="lede">The Project is the working example: one Postgres data stack, one hand-built database agent, and seven builds that progressively add retrieval, observability, CI, a conversational interface, and independent verification. The point is not just to make an AI system answer questions — it is to make the system reproducible, constrained, observable, and honest about what its evidence does and does not support.</p>
+<div class="cta-row">
+<a class="btn btn-primary" href="#work">See the system</a>
+<a class="btn btn-ghost" href="writing.html">Read the build log</a>
+</div>
+</div>
+</section>
+<section id="overview">
+<div class="wrap">
+<span class="eyebrow">what this actually is</span>
+<p>the system is a natural-language interface to a real PostgreSQL database. A user asks a question in plain English; the agent selects the appropriate evidence path, generates or runs the necessary query, and answers from the result. The database connection used for normal querying is read-only, while a separate write-scoped role is limited to the agent's scratch workspace.</p>
+<p>The finished system runs end-to-end in Docker Compose: a real raw-to-clean data pipeline, PostgreSQL and pgvector, a Streamlit chat interface, persistent conversation memory, structured observability, CI, an evaluation harness, and a second agent that checks tool-backed answers against the evidence gathered for them.</p>
+<div class="overview-stats chips">
+<span class="chip">7 builds complete</span>
+<span class="chip">14 SQL migrations</span>
+<span class="chip">60 automated tests</span>
+<span class="chip">CI-gated</span>
+<span class="chip">3 documented live incident audits</span>
+</div>
+<h3>What it does</h3>
+<ul class="overview-list"><li><b>Answers questions in plain English</b> by writing and running its own SQL against a real PostgreSQL database, behind a role that can only ever <code>SELECT</code>.</li><li><b>Finds thematically related results with no exact keyword match</b>, using pgvector semantic search over the underlying data.</li><li><b>Answers questions about its own build history and status</b> through semantic search over the project's documentation, kept current as the system grows.</li><li><b>Persists computed results for reuse</b> in a scratch workspace isolated to its own database role and schema, with age-based visibility into what has been left behind and a UI-only path to remove it.</li><li><b>Runs as a working chat application</b> through a Streamlit front end with persistent, tiered conversation memory and transparency into the tools an answer relied on.</li></ul>
+<h3>What makes it stand out</h3>
+<ul class="overview-list"><li><b>Self-verification.</b> Every tool-backed response is checked by the project's second agent — the Verifier/Critic Agent — against the actual evidence gathered for the response, with a visible verified/unverified result and a plain-English reason. It is a distinct second agent in the stack, not simply another presentation layer for the first agent.</li><li><b>Full cost observability.</b> Tool calls and API turns are logged; token usage, latency, result size, and errors can be traced so a cost spike can be investigated rather than guessed at.</li><li><b>Least-privilege data access.</b> Two separate Postgres roles keep reading and writing distinct: one is strictly read-only for querying, while the other is scoped to the agent's scratch schema.</li><li><b>CI-gated correctness.</b> The full test suite and dedicated evaluation harness run from a clean environment, covering both the main agent's behavior and the verifier's judgment.</li><li><b>Incident-driven engineering.</b> Real issues have been found through live usage after deployment, then root-caused, fixed, and re-verified against a freshly deployed instance. The incidents are documented rather than hidden behind a polished final result.</li><li><b>Documentation that stays current.</b> The command reference and project history are maintained as the system grows and are kept aligned with the searchable documentation collection, so the agent's answers about its own system have a maintained source behind them.</li></ul>
+</div>
+</section>
+<section id="work">
+<div class="wrap">
+<span class="eyebrow">featured work</span>
+<div class="record">
+<h2 class="record-title">Ask-Your-Database: a self-checking SQL agent <span class="badge-status">public repo · Build 7 complete</span></h2>
+<p class="record-sub">A complete data-and-agent system: reproducible ingestion, normalized queryable data, semantic retrieval, a hand-built tool-use loop, observability, CI, a Streamlit interface, persistent memory, and an independent verifier that checks tool-backed answers before they are surfaced.</p>
+<figure class="record-figure">
+<svg aria-labelledby="tbTitle tbDesc" role="img" viewbox="0 0 680 190">
+<title id="tbTitle">Agent trust-boundary architecture</title>
+<desc id="tbDesc">The external model proposes SQL but never runs it. The agent code is the gate, and a read-only database role is a second wall — both inside a trusted zone.</desc>
+<defs>
+<marker id="arw" markerheight="6.5" markerwidth="6.5" orient="auto-start-reverse" refx="8" refy="5" viewbox="0 0 10 10">
+<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"></path>
+</marker>
+</defs>
+<rect fill="none" height="150" rx="14" stroke="var(--accent)" stroke-dasharray="6 5" stroke-width="1.3" width="434" x="228" y="34"></rect>
+<text fill="var(--accent)" font-family="'IBM Plex Mono', monospace" font-size="11.5" x="246" y="52">your trusted zone</text>
+<rect fill="var(--panel)" height="74" rx="10" stroke="var(--line)" stroke-width="1" width="150" x="18" y="68"></rect>
+<text fill="var(--ink)" font-family="'Space Grotesk', sans-serif" font-size="14" font-weight="600" text-anchor="middle" x="93" y="101">LLM (model)</text>
+<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="11" text-anchor="middle" x="93" y="122">proposes SQL</text>
+<rect fill="var(--tint)" height="66" rx="10" stroke="var(--accent)" stroke-width="1" width="150" x="258" y="72"></rect>
+<text fill="var(--accent-2)" font-family="'Space Grotesk', sans-serif" font-size="14" font-weight="600" text-anchor="middle" x="333" y="101">Agent (Python)</text>
+<text fill="var(--muted)" font-family="'IBM Plex Mono', monospace" font-size="11" text-anchor="middle" x="333" y="121">the gate</text>
+<rect fill="var(--accent)" height="66" rx="10" stroke="var(--accent)" stroke-width="1" width="150" x="482" y="72"></rect>
+<text fill="#ffffff" font-family="'Space Grotesk', sans-serif" font-size="14" font-weight="600" text-anchor="middle" x="557" y="100">appdb</text>
+<text fill="#ffffff" font-family="'IBM Plex Mono', monospace" font-size="10.5" text-anchor="middle" x="557" y="120">read-only role</text>
+<line marker-end="url(#arw)" stroke="var(--muted)" stroke-width="1.4" x1="168" x2="258" y1="105" y2="105"></line>
+<line marker-end="url(#arw)" stroke="var(--muted)" stroke-width="1.4" x1="408" x2="482" y1="90" y2="90"></line>
+<line marker-end="url(#arw)" marker-start="url(#arw)" stroke="var(--muted)" stroke-width="1.4" x1="482" x2="408" y1="110" y2="110"></line>
+<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="10.5" text-anchor="middle" x="445" y="99">SQL / rows</text>
+</svg>
+<figcaption>core architecture · the model proposes SQL; the code and a read-only role decide what actually runs</figcaption>
+</figure>
+<div class="field">
+<div class="field-key">stack</div>
+<div class="field-val">
+<div class="chips">
+<span class="chip">PostgreSQL</span>
+<span class="chip">pgvector</span>
+<span class="chip">Docker</span>
+<span class="chip">Python</span>
+<span class="chip">Streamlit</span>
+<span class="chip">GitHub Actions</span>
+<span class="chip">Claude API</span>
+</div>
+</div>
+</div>
+<div class="field">
+<div class="field-key">proof points</div>
+<div class="field-val">A live token-burn incident fell from 177,090 to 8,024 tokens after the underlying checkout data was normalized, while the wrong answer was fixed; a separate deployment-verification failure showed why a green CI run is not proof that a long-running service has loaded the new code; later fixes addressed history compounding, retrieval routing, evidence grounding, documentation truncation, and scratch-workspace lifecycle.</div>
+</div>
+<div class="record-actions">
+<a class="btn btn-primary btn-sm" href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">Repo ↗</a>
+<a class="btn btn-ghost btn-sm" href="writing.html">Build log ↗</a>
+<a class="btn btn-ghost btn-sm" href="writing.html#token-burn-incident">Incident history ↗</a>
+</div>
+</div>
+<span class="eyebrow mt">the components behind it — seven builds, same spine</span>
+<div class="work-grid">
+<div class="proj">
+<span class="build-no">build 1</span>
+<h3>Ask-Your-Database agent</h3>
+<p>The foundation: a hand-built tool-use loop, no agent framework, that turns plain-English questions into SQL and runs them through a dedicated read-only database role. Tool-call caps and API-error handling keep the loop bounded.</p>
+<div class="chips"><span class="chip">tool use</span><span class="chip">read-only</span></div>
+<div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="writing.html#build1">write-up ↗</a></div>
+</div>
+<div class="proj">
+<span class="build-no">build 2 · 2.5</span>
+<h3>Raw-to-queryable pipeline + scratch workspace</h3>
+<p>A real equipment-allocation export moves through raw staging into typed, clean Postgres data. Build 2.5 adds a separate database role and scratch schema where the agent can save derived results, without giving it broader write access to the database.</p>
+<div class="chips"><span class="chip">ETL</span><span class="chip">least privilege</span></div>
+<div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="writing.html#build2">write-up ↗</a></div>
+</div>
+<div class="proj">
+<span class="build-no">build 3 · 3.5</span>
+<h3>Retrieval-augmented agent + docs RAG</h3>
+<p>pgvector adds semantic search over equipment summaries, then over the project's own documentation. Semantic search is limited to results that meet a relevance threshold, while questions that require a complete or current list are routed to direct SQL rather than relying on a handful of similarity matches.</p>
+<div class="chips"><span class="chip">RAG</span><span class="chip">pgvector</span></div>
+<div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="writing.html#build3">write-up ↗</a></div>
+</div>
+<div class="proj">
+<span class="build-no">build 4</span>
+<h3>Observability &amp; eval harness</h3>
+<p>Structured logging, end-to-end evaluation against the live agent, and a history of system metrics make tool use, latency, errors, and regressions measurable instead of anecdotal.</p>
+<div class="chips"><span class="chip">evals</span><span class="chip">metrics</span></div>
+<div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="writing.html#build4">write-up ↗</a></div>
+</div>
+<div class="proj">
+<span class="build-no">build 5</span>
+<h3>Reproducible deployment with CI</h3>
+<p>GitHub Actions builds the schema, pipeline, and tests from a clean environment. The build also exposed reproducibility and data-governance problems, including a mid-project anonymization pivot and credential-history cleanup.</p>
+<div class="chips"><span class="chip">CI/CD</span><span class="chip">governance</span></div>
+<div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="writing/build5-anonymization-incident.html">write-up ↗</a></div>
+</div>
+<div class="proj">
+<span class="build-no">build 6</span>
+<h3>Conversational front end</h3>
+<p>Streamlit turns the agent into a usable application. Persistent chat history, hybrid tiered memory, and a visible tools-used trace make the conversation durable and inspectable — while later incident work hardened the model’s memory against history compounding.</p>
+<div class="chips"><span class="chip">Streamlit</span><span class="chip">memory</span></div>
+<div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="writing.html#build6">write-up ↗</a></div>
+</div>
+<div class="proj">
+<span class="build-no">build 7</span>
+<h3>Verifier / critic agent</h3>
+<p>A second agent — the Verifier/Critic Agent — checks every response from the primary agent against the tool evidence gathered for it. The result is surfaced as a clear verified/unverified status, with the Verifier/Critic Agent's reasoning available rather than hidden.</p>
+<div class="chips"><span class="chip">verify-before-surface</span><span class="chip">multi-agent</span></div>
+<div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="writing.html#build7">write-up ↗</a></div>
+</div>
+</div>
+</div>
+</section>
+<section id="writing">
+<div class="wrap">
+<span class="eyebrow">field notes</span>
+<div class="writing-grid">
+<a class="post featured" href="writing.html#token-burn-incident">
+<span class="tag">on agent reliability · the turning point</span>
+<h3>The 177,090-token question: fix the data, not the prompt</h3>
+<p>The most important failure in the project began as a prompt problem and ended as a data-model problem. Normalizing checkout items cut the original question from 177,090 to 8,024 tokens and fixed the answer at the same time.</p>
+<div class="more">read ↗</div>
+</a>
+<a class="post" href="writing.html#deployment-verification-incident">
+<span class="tag">on deployment reliability</span>
+<h3>When CI is green but the app is still old</h3>
+<span class="kw">fresh processes · long-running service · container recreate</span>
+<div class="more">read ↗</div>
+</a>
+<a class="post" href="writing.html#stale-status-claim-incident">
+<span class="tag">on evidence boundaries</span>
+<h3>Supported by the evidence — but was the evidence complete?</h3>
+<span class="kw">truncation · verifier scope · extraction pipeline</span>
+<div class="more">read ↗</div>
+</a>
+<a class="post" href="writing/build5-anonymization-incident.html">
+<span class="tag">on data governance</span>
+<h3>When "anonymized" isn't</h3>
+<span class="kw">git-history purge · CI fixture · data exposure</span>
+<div class="more">read ↗</div>
+</a>
+<a class="post" href="writing.html#build1">
+<span class="tag">on agents</span>
+<h3>Building the tool-use loop by hand</h3>
+<span class="kw">no framework · read-only boundary</span>
+<div class="more">read ↗</div>
+</a>
+<a class="post" href="writing.html#build4">
+<span class="tag">on reliability</span>
+<h3>How I know the agent is changing</h3>
+<span class="kw">evals · observability · metrics history</span>
+<div class="more">read ↗</div>
+</a>
+<a class="post" href="writing.html#build7">
+<span class="tag">on multi-agent systems</span>
+<h3>Verify-before-surface</h3>
+<span class="kw">tool_choice · grounded verification</span>
+<div class="more">read ↗</div>
+</a>
+</div>
+<p class="writing-cta">Full build log — seven builds, the incidents that changed the design, and the decisions that closed them → <a href="writing.html">writing</a></p>
+</div>
+</section>
+<section class="about" id="about">
+<div class="wrap">
+<span class="eyebrow">about</span>
+<p>I work at the seam between data infrastructure and AI tooling: building systems that can be reproduced, constrained, observed, and improved. The Project is one system rather than seven disconnected demos — the same Postgres foundation and agent are deepened in place as each build adds something the previous version was missing.</p>
+<p class="sig">// status: core system complete through Build 7 — open to data &amp; AI-augmented engineering roles.</p>
+</div>
+</section>
+<section class="contact" id="contact">
+<div class="wrap">
+<span class="eyebrow">contact</span>
+<h2>If this looks like how your team works, let's talk.</h2>
+<p class="note">The fastest way to evaluate the work is the repository and the build log: they show the architecture, the tests, the incidents, and the fixes rather than only the finished interface.</p>
+<a class="btn btn-primary" href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">View the repo</a>
+<div class="social">
+<a href="https://github.com/AndersonBallantyne" rel="noopener" target="_blank">github</a>
+</div>
+</div>
+</section>
+</main>
+<footer>
+<div class="wrap">
+<span>© 2026 Anderson Ballantyne — built and documented in the open.</span>
+</div>
+</footer>
+</body>
+</html>

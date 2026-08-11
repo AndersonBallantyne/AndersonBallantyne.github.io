@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The 177,090-Token Question: Four Incidents, One Root Cause — Anderson Ballantyne</title>
+<meta name="description" content="Four real token-burn incidents across two days — a verifier false positive, unstructured data, a fix that never reached the running app, and a conversation-memory bug that silently doubled its own cost every round. All four trace back to the same root cause." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #FAFAF6; --panel: #FFFFFF; --ink: #191B21; --muted: #63656E; --faint: #8A8C93;
+    --line: #E6E4DC; --accent: #17605A; --accent-2: #0F423E; --tint: #EAF1EE;
+    --warn: #B5502B; --warn-tint: #F7E9E2; --good: #2E7D5B; --good-tint: #E4F1EA;
+    --maxw: 700px; --gutter: clamp(1.2rem, 5vw, 3rem);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: auto; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 17px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding-inline: var(--gutter); }
+  h1, h2, h3 { font-family: "Space Grotesk", sans-serif; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; color: var(--ink); }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--tint); color: var(--accent-2); padding: 0.1em 0.35em; border-radius: 4px; }
+
+  nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: saturate(1.1) blur(6px); border-bottom: 1px solid var(--line); }
+  .nav-inner { display: flex; justify-content: space-between; align-items: center; padding-block: 0.9rem; max-width: var(--maxw); margin: 0 auto; padding-inline: var(--gutter); }
+  .brand { font-family: "Space Grotesk", sans-serif; font-weight: 600; font-size: 15px; color: var(--ink); }
+  .back { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--muted); }
+  .back:hover { color: var(--accent); }
+
+  article { padding-block: clamp(2.5rem, 7vw, 4rem) 5rem; }
+
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .06em; color: var(--accent); text-transform: lowercase; margin-bottom: 1rem; }
+  h1.title { font-size: clamp(1.7rem, 5vw, 2.5rem); margin: 0 0 1rem; max-width: 22ch; }
+  .dek { color: var(--muted); font-size: 1.08rem; max-width: 60ch; margin: 0 0 1.6rem; }
+  .meta { display: flex; gap: 1.2rem; flex-wrap: wrap; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--faint); padding-bottom: 1.6rem; border-bottom: 1px solid var(--line); margin-bottom: 2.2rem; }
+
+  article > .wrap > h2 { font-size: 1.4rem; margin: 2.6rem 0 0.9rem; }
+  article > .wrap > p { margin: 0 0 1.1rem; max-width: 62ch; }
+  article > .wrap > ul, article > .wrap > ol { margin: 0 0 1.1rem; padding-left: 1.4rem; max-width: 62ch; }
+  article > .wrap > ul li, article > .wrap > ol li { margin-bottom: 0.5rem; }
+
+  .callout { border: 1px solid var(--line); border-left: 4px solid var(--accent); background: var(--panel); border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; font-size: 0.95rem; }
+  .callout.warn { border-left-color: var(--warn); background: var(--warn-tint); }
+  .callout.good { border-left-color: var(--good); background: var(--good-tint); }
+  .callout b { color: var(--ink); }
+
+  table.field-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 1rem 0 1.6rem; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  table.field-table th { text-align: left; background: var(--accent); color: #fff; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; padding: 9px 14px; }
+  table.field-table td { padding: 9px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+  table.field-table td.mono { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--accent-2); }
+  table.field-table td.num { font-family: "IBM Plex Mono", monospace; font-size: 12px; text-align: right; white-space: nowrap; }
+  .table-note { font-size: 0.82rem; color: var(--faint); margin: -0.8rem 0 1.6rem; max-width: 62ch; }
+
+  .figure { margin: 1.2rem 0 1.6rem; }
+  .figure img { max-width: 100%; border-radius: 10px; border: 1px solid var(--line); display: block; }
+  .figcap { font-size: 0.85rem; color: var(--faint); margin-top: 0.5rem; }
+
+  details.diagram { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); margin: 1.4rem 0; }
+  details.diagram summary { cursor: pointer; padding: 0.9rem 1.2rem; font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 0.5rem; }
+  details.diagram summary::-webkit-details-marker { display: none; }
+  details.diagram summary::before { content: "\25B8"; transition: transform 0.15s; display: inline-block; }
+  details.diagram[open] summary::before { transform: rotate(90deg); }
+  details.diagram .diagram-body { padding: 0.2rem 1.2rem 1.2rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+  details.diagram .diagram-body svg { width: 100%; height: auto; display: block; }
+
+  pre.code { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; line-height: 1.55; margin: 1rem 0 1.4rem; }
+  pre.code .cmt { color: var(--faint); }
+
+  .pull { font-family: "Space Grotesk", sans-serif; font-size: 1.25rem; font-weight: 600; color: var(--accent-2); border-left: 3px solid var(--accent); padding-left: 1rem; margin: 2rem 0; max-width: 52ch; line-height: 1.4; }
+
+  .lessons { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 1.4rem 1.6rem; margin: 1.4rem 0; }
+  .lessons h2 { margin-top: 0 !important; }
+  .lessons ol { padding-left: 1.3rem; }
+  .lessons li { margin-bottom: 0.7rem; }
+  .lessons li b { color: var(--accent-2); }
+
+  .post-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 3rem; padding-top: 1.6rem; border-top: 1px solid var(--line); font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+
+  footer { border-top: 1px solid var(--line); }
+  footer .wrap { padding-block: 1.6rem; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--faint); max-width: var(--maxw); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="../index.html" class="brand">Anderson Ballantyne</a>
+    <a href="../writing.html" class="back">&larr; all writing</a>
+  </div>
+</nav>
+
+<article>
+  <div class="wrap">
+    <span class="kicker">field notes &middot; agent reliability &middot; builds 6/7</span>
+    <h1 class="title">The 177,090-Token Question</h1>
+    <p class="dek">A token counter, shipped as a half-hour feature, ended up surfacing four real incidents across two days: unstructured data forcing an agent to guess at query time, a fix that passed CI and still never reached the running app, and a conversation-memory bug that had been silently doubling its own cost every round since the day it shipped. Every fix that held did the same thing — replaced a guess with a stated fact. Every fix that didn't, just guessed again in a new way.</p>
+    <div class="meta"><span>SQL_TEST_01 &middot; Builds 6/7</span><span>~8 min read</span></div>
+
+    <p>This project's agent answers plain-English questions about an equipment-checkout database by writing its own SQL. A second agent — a verifier — checks whether the proposed answer is actually supported by the tool evidence gathered for it before showing a green or red badge. Both had been working for weeks. Adding a token counter to the UI should have been a half-hour change: three fields threaded through an existing logging path. It's what actually started everything below.</p>
+
+    <h2>Every real number, one table</h2>
+    <p>Five real questions, pulled straight from the logs across both days — the worst logged run for each, next to its final, browser- or verifier-confirmed state:</p>
+    <table class="field-table">
+      <thead><tr><th>Question</th><th>Before</th><th>After</th><th>Change</th></tr></thead>
+      <tbody>
+        <tr><td>"How many different types of cameras?"</td><td class="num">177,090</td><td class="num">8,024</td><td class="mono">95.5% fewer tokens &middot; wrong (4 types) &rarr; correct (5)</td></tr>
+        <tr><td>"How many laptops do you have?"</td><td class="num">45,469</td><td class="num">6,018</td><td class="mono">86.8% fewer tokens &middot; wrong (1,501) &rarr; correct (482)</td></tr>
+        <tr><td>"How many types of microphones?"</td><td class="num">14,801</td><td class="num">7,434</td><td class="mono">Correct, false-negative badge &rarr; correct + verified</td></tr>
+        <tr><td>"Tell me about SQL migrations"</td><td class="num">270,961</td><td class="num">7,794</td><td class="mono">97.1% fewer tokens &middot; wrong + incomplete &rarr; every claim traced to evidence</td></tr>
+        <tr><td>"Latest commits"</td><td class="num">176,252</td><td class="num">10,393</td><td class="mono">94.1% fewer tokens &middot; correct but exponentially costly &rarr; correct and cheap</td></tr>
+      </tbody>
+    </table>
+    <p class="table-note">Every number here is a real logged token count, cross-referenced against the app's own tool-call log and persisted chat history — not an estimate, and not a cherry-picked best case.</p>
+
+    <h2>Incident 1 &middot; 2026-08-06 — a verifier false positive, a false latency lead, and the real bug underneath</h2>
+    <p>Within minutes of shipping the token counter, a real question — "How many cameras do you have?" — came back green with a red verifier badge underneath it: <em>unverified</em>. It would have been easy to trust the badge and move on. Reading the actual evidence instead found a real bug in the verifier itself: two of five per-category counts had been measured under a broader SQL filter than the total they were compared against, making an apples-to-oranges mismatch look like a contradiction. Fixed by teaching the verifier to check whether a category's condition is a genuine logical subset of the total's, not just compare the resulting numbers.</p>
+    <p>A second false lead followed: a tool call logged at 36,469 milliseconds, first blamed on Streamlit's dev-mode file watcher. Testing that hypothesis directly — the identical call, run in a plain non-Streamlit process in the same container — still took 36.2 seconds, disproving it outright. The real cause was a cold-start network fetch for a ~90MB embedding model with no persistent cache; a second warm call measured 2.4 seconds. Fixed by baking the model into the Docker image at build time.</p>
+    <p>With that noise cleared, the real incident: <b>"How many different types of cameras?" cost 177,090 tokens across nine tool calls</b>, and this time the verifier's red badge was correct — the proposed answer mixed per-model counts pulled under two different SQL filters and presented them as one measurement.</p>
+    <div class="figure">
+      <img src="token-burn-verifier-screenshot.png" alt="Screenshot of the Ask-Your-Database Agent UI showing a wrong answer of 5 camera types, a red Unverified badge explaining the real contradiction in the evidence, and 177,090 total tokens across 9 tool calls." />
+      <div class="figcap">9 tool calls, 177,090 tokens, and a verifier badge that was correct this time.</div>
+    </div>
+    <p>Four prompt-level fixes followed, each one tested and reported honestly, including the ones that didn't work:</p>
+    <table class="field-table">
+      <thead><tr><th>Attempt</th><th>Tokens</th><th>What broke</th></tr></thead>
+      <tbody>
+        <tr><td>v1 — one aggregate query</td><td class="num">11,926</td><td class="mono">Cheap, but wrong — mislabeled an accessory as a camera, missed a status prefix. Caught by the verifier.</td></tr>
+        <tr><td>v2 — generalize the rules</td><td class="num">61,124</td><td class="mono">Correct, but a soft "pull the full list if ambiguous" option caused more exploration, not less.</td></tr>
+        <tr><td>v3 — make it mandatory</td><td class="num">23,921&ndash;45,469</td><td class="mono">Fixed correctness, taxed every question with an expensive step even unneeded — and produced a false <em>negative</em> on a separate question.</td></tr>
+        <tr><td>v4&ndash;v5 — normalize the data</td><td class="num">6,018&ndash;10,221</td><td class="mono">Consistently correct and cheap, generalized on the first try to an untested category.</td></tr>
+      </tbody>
+    </table>
+    <p>The database had stored each checkout as one delimited text string — item names and status glued together, no structure. Every prompt fix so far had been compensating for that same fact at query time, on every question. A keyword search for "camera" both over-counted (an accessory sharing the word) and under-counted (real camera models named "&hellip; BODY," not "&hellip; CAMERA," for no reason discoverable from the prompt alone).</p>
+    <div class="callout good"><b>The fix that actually held:</b> parse the messy text exactly once, offline, into a real table — one row per item, <code>category</code> and <code>is_accessory</code> already resolved as data. A full audit found a closed universe of 55 item names, each classified once by hand. The agent's prompt got <em>shorter</em>, not longer, once it had real columns to point at instead of naming conventions to explain — and the very next category tested (tripods, never asked before) answered correctly on the first try with zero further tuning.</div>
+
+    <p>What actually changed, in one query. Before, the agent guessed at query time; after, the guess was already resolved as data, once, offline:</p>
+    <pre class="code"><span class="cmt">-- before: keyword guessing at query time, every question</span>
+SELECT COUNT(*) FROM clean.allocations
+WHERE summary ILIKE '%camera%'
+<span class="cmt">-- over-counts accessories sharing the word, under-counts models
+-- named "... BODY" with no literal "camera" in the string</span>
+
+<span class="cmt">-- after: category and is_accessory already resolved, once</span>
+SELECT COUNT(*) FROM clean.allocation_items
+WHERE category = 'camera' AND is_accessory = false
+<span class="cmt">-- one row per item, classified offline from a closed 55-item audit</span></pre>
+
+    <details class="diagram" open>
+      <summary>View diagram &middot; before/after architecture</summary>
+      <div class="diagram-body">
+        <svg viewBox="0 0 640 220" role="img" aria-labelledby="tbfTitle tbfDesc">
+          <title id="tbfTitle">Before/after: query-time guessing vs. pre-resolved data</title>
+          <desc id="tbfDesc">Before, the agent re-derives category and accessory status from unstructured text on every question. After, that work happens once, offline, into a normalized table the agent just filters.</desc>
+          <defs>
+            <marker id="tbfArw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </marker>
+          </defs>
+          <text x="12" y="24" font-family="'IBM Plex Mono', monospace" font-size="11" fill="var(--warn)">before &middot; every question</text>
+          <rect x="10" y="34" width="180" height="56" rx="8" fill="var(--warn-tint)" stroke="var(--warn)" stroke-width="1" />
+          <text x="100" y="58" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)">summary text</text>
+          <text x="100" y="76" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="10" fill="var(--muted)">unstructured, delimited</text>
+          <line x1="190" y1="62" x2="250" y2="62" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#tbfArw)" />
+          <text x="220" y="52" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--faint)">guess</text>
+          <rect x="250" y="34" width="180" height="56" rx="8" fill="var(--panel)" stroke="var(--warn)" stroke-width="1" />
+          <text x="340" y="58" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)">ILIKE keyword</text>
+          <text x="340" y="76" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="10" fill="var(--muted)">re-derived every time</text>
+          <line x1="430" y1="62" x2="490" y2="62" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#tbfArw)" />
+          <rect x="490" y="34" width="140" height="56" rx="8" fill="var(--warn-tint)" stroke="var(--warn)" stroke-width="1.4" />
+          <text x="560" y="58" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)">wrong / costly</text>
+          <text x="560" y="76" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="10" fill="var(--muted)">177,090 tokens</text>
+
+          <text x="12" y="130" font-family="'IBM Plex Mono', monospace" font-size="11" fill="var(--good)">after &middot; resolved once, offline</text>
+          <rect x="10" y="140" width="180" height="56" rx="8" fill="var(--good-tint)" stroke="var(--good)" stroke-width="1" />
+          <text x="100" y="164" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)">allocation_items</text>
+          <text x="100" y="182" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="10" fill="var(--muted)">one row per item</text>
+          <line x1="190" y1="168" x2="250" y2="168" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#tbfArw)" />
+          <text x="220" y="158" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--faint)">filter</text>
+          <rect x="250" y="140" width="180" height="56" rx="8" fill="var(--panel)" stroke="var(--good)" stroke-width="1" />
+          <text x="340" y="164" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)">category = 'camera'</text>
+          <text x="340" y="182" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="10" fill="var(--muted)">already resolved as data</text>
+          <line x1="430" y1="168" x2="490" y2="168" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#tbfArw)" />
+          <rect x="490" y="140" width="140" height="56" rx="8" fill="var(--good-tint)" stroke="var(--good)" stroke-width="1.4" />
+          <text x="560" y="164" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)">correct / cheap</text>
+          <text x="560" y="182" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="10" fill="var(--muted)">8,024 tokens</text>
+        </svg>
+      </div>
+    </details>
+
+    <h2>Incident 2 &middot; 2026-08-07 morning — the fix that never shipped</h2>
+    <p>The next day opened with a real CI failure: one flaky eval case, plus a genuine bug — <code>SYSTEM_PROMPT</code> still pointed at a filename renamed two days earlier. Both fixed, both verified stable across repeated local runs, both confirmed via a fully green CI run. Every check available said this was done.</p>
+    <p>It wasn't. A live question in the actual browser — "Tell me about SQL migrations" — cost <b>270,961 tokens</b>, the largest single-question total this project has logged. The fix was real. It had never reached the thing answering the question.</p>
+    <div class="callout warn"><b>The gap:</b> a Streamlit server is one long-running process that imports its code once, at startup. Every verification step taken the day before — a fresh <code>docker exec python -c</code> call, CI's own container — spawns a brand-new process that re-imports from disk every time, so all of them correctly picked up the fix. None of them touched the process actually running, continuously, since the day before. <code>docker exec ... grep</code> against the source file even confirmed the fix was there — true, and almost exactly the wrong question. Whether the running service had reloaded it was the one that mattered.</div>
+    <p class="pull">Proving code correct and proving a service deployed it turned out to be two different claims, and only one of them had been checked.</p>
+    <p>The real fix was a real <code>docker compose build</code> and <code>up -d --force-recreate</code> — confirmed by checking when the container itself was created, not what its files contained. A fresh test afterward: 9,878 tokens, fully correct. Then, independently, the person who'd hit the bug tried the same question again, unprompted: 15,799 tokens, a 94% drop, confirming the fix from the other side of the interface.</p>
+    <p>That second live test wasn't perfectly clean either. It took a different path — a single semantic search instead of a follow-up query — landed on an incomplete four-migration sample instead of the real thirteen, and narrated past what the evidence showed: that migrations are "cumulative" and "idempotent," claims the search results never made. The verifier caught every one of those claims individually. Nothing wrong reached the user, but it was a real, separate gap: answering an open-ended question from a partial sample and filling the rest with something that merely sounded right.</p>
+    <div class="figure">
+      <img src="deployment-verification-verifier-screenshot.png" alt="Screenshot of the Ask-Your-Database Agent UI showing the verifier's red Unverified message, itemizing all four unsupported claims in the migrations answer" />
+      <div class="figcap">The verifier's actual output — itemizing each unsupported claim individually, not a generic mismatch.</div>
+    </div>
+    <p>Closing that gap for good took two more same-day passes: a tracked pre-commit hook so the documentation search index can't silently go stale, and — once testing that hook surfaced the identical shape of problem in "what was the latest incident?" (semantic search has no concept of chronological order) — a rule generalized to cover both: route "list every X" <em>and</em> "tell me about X" <em>and</em> "latest X" to a direct, ordered SQL query against the one file that tracks everything completely, instead of leaving it to a similarity search's best guess. Re-run afterward, the original migrations question retrieved all thirteen in one query, every claim traced to evidence: <b>7,794 tokens.</b></p>
+
+    <h2>Incident 3 &middot; 2026-08-07, later that day — two bugs found reviewing live traffic, not testing</h2>
+    <p>Reviewing a routine question in the log — "Latest commits" — turned up a number that didn't fit the pattern above: <b>176,252 tokens</b>, even though the single tool call behind it was exactly correct: the right file, the right sort order, a complete and accurate answer. The cost was coming from somewhere the query itself never touched.</p>
+    <p>The app's own conversation memory kept the last three rounds at "full fidelity" for context — but each round's stored history had never been separated from what it had itself inherited from the rounds before it. Every new round re-embedded its own copy of the previous rounds' already-inherited histories, compounding roughly 2x per round with no bound. Traced back through every surviving row, as far as the data went: 6 &rarr; 10 &rarr; 20 &rarr; 40 &rarr; 76 &rarr; 144 &rarr; 274 &rarr; 506 &rarr; 938 messages — present since the very first use of the feature, not something that started that day.</p>
+    <div class="callout warn"><b>Fixed</b> by tracking exactly where a round's own new turns begin and persisting only that slice, never the inherited prefix. Verified live: four sequential rounds against a freshly rebuilt, freshly recreated container held flat at four messages each, cost growing linearly instead of exponentially. Two regression tests were added and deliberately checked <em>both</em> ways — confirmed to fail against the old code and pass against the fix, not just assumed to work.</div>
+    <p>Re-asking the identical question immediately afterward, against a now-clean history, surfaced a second and completely unrelated bug: this time the model queried the list of known files and picked the one named after the highest build number, reporting <b>"Build 7 is the latest build"</b> — silently missing two weeks of real work that exists only in the one file that actually keeps growing after a build ships. The verifier marked it <code>supported: true</code>, correctly: the answer was fully consistent with the wrong evidence gathered. It has no way to judge whether the right evidence was retrieved in the first place — the same blind spot from Incident 2's migrations question, showing up a second way: a complete-looking answer built from the wrong source, instead of an incomplete sample from the right one. Fixed by stating the rule directly — one file keeps growing after a build ships, the rest are frozen the moment it does — and re-verified against the exact failing question: <b>10,393 tokens</b>, correct.</p>
+
+    <div class="lessons">
+      <h2>The throughline</h2>
+      <p style="margin:0 0 1rem;">Every fix that actually held converged on the same shape, across two very different failure classes: resolve the ambiguity once, as data or a stated rule, not as a heuristic re-derived from scratch on every question. That was true when the ambiguity lived in the prompt layer (Incident 1's unstructured data, Incident 2 and 3's routing rules) and equally true when it lived one layer down, in code that was supposed to persist state but silently re-derived it instead (Incident 3's memory bug). Cost and correctness moved together every time, never against each other — the cheapest wrong answer in this whole arc was never actually cheaper than the eventual correct one, once what it costs to talk a model out of a bad guess gets counted too.</p>
+      <ol>
+        <li><b>A red badge and a correct badge look identical until you read the evidence.</b> True in both directions here — a false positive at the start, a false negative in the middle — and true a third way in Incident 3: a badge that's technically correct but built on the wrong source entirely.</li>
+        <li><b>Fixing a symptom at the prompt layer can hide which layer the bug actually lives in.</b> Sometimes it was unstructured data. Sometimes it was a service that hadn't restarted. Sometimes it was a real bug in code that no amount of prompt tuning would ever have touched.</li>
+        <li><b>Proving code correct and proving a service deployed it are different claims.</b> A fresh subprocess test and a green CI run both prove the former — neither proves the latter, since both always spawn a brand-new process that re-imports from disk.</li>
+        <li><b><code>supported: true</code> only proves an answer matches its own evidence</b> — never that the right evidence was gathered in the first place. Twice in this arc, that gap let a wrong answer through with a technically accurate green light.</li>
+        <li><b>The same question can take a different path on a different run.</b> One clean, correct exchange doesn't prove the underlying logic is reliable — Incident 3's 176,252-token round used exactly the right query; the very next fresh attempt at the identical question used a different, wrong one.</li>
+      </ol>
+    </div>
+
+    <h2>Postscript: the same gap, caught correctly, live</h2>
+    <p>Weeks after all four incidents above were closed, a routine question — "what type of cameras do you have?" — produced a correct five-item list wrapped in fabricated detail: real-world camera specs ("mirrorless," "full-frame," "360-degree") the SQL evidence never provided. Same failure class as lesson #4 above, on a different tool this time. The verifier caught it precisely, unprompted, in production — naming exactly which claims weren't backed by evidence and confirming the ones that were.</p>
+    <div class="figure">
+      <img src="camera-types-verifier-screenshot.png" alt="Screenshot of the Ask-Your-Database Agent UI showing a correct 5-camera list with fabricated type classifications, and a red Unverified badge naming exactly which claims aren't supported by the evidence" />
+      <div class="figcap">Live, weeks after ship, with no incident in progress — the safety net still doing exactly what it was built to do.</div>
+    </div>
+    <p>The underlying gap — the grounding rule that fixed this for <code>search_docs</code> had never been generalized to <code>run_sql_query</code> results — was closed the same day: restated as tool-agnostic, naming this exact case directly in the prompt rather than patching it a second time.</p>
+    <div class="figure">
+      <img src="camera-types-verified-fixed-screenshot.png" alt="Screenshot of the Ask-Your-Database Agent UI showing the identical camera-types question re-tested after the fix: bare item names with no added classification, and a green Verified against tool evidence badge" />
+      <div class="figcap">Same question, re-tested live on a fresh rebuild: bare item names, no fabricated detail, verifier confirmed <code>supported: true</code>.</div>
+    </div>
+
+    <p>Full timestamped accounts — every question, every fix, every token count, in order — are in the project repo: the <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/2026-08-06-token-burn-incident-audit.html" target="_blank" rel="noopener">2026-08-06 incident audit</a> for Incident 1, and the <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/2026-08-07-deployment-verification-incident-audit.html" target="_blank" rel="noopener">2026-08-07 incident audit</a> for Incidents 2 and 3 — Phase 11 of the latter covers this postscript too.</p>
+
+    <div class="post-nav">
+      <a href="../writing.html">&larr; back to the build log</a>
+      <a href="../index.html">portfolio &#8599;</a>
+    </div>
+  </div>
+</article>
+
+<footer>
+  <div class="wrap">
+    <span>&copy; 2026 Anderson Ballantyne</span>
+  </div>
+</footer>
+
+</body>
+</html>
