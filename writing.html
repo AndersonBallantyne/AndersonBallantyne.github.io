@@ -158,7 +158,7 @@
 <p>A token-count UI feature surfaced a verifier false positive, a 36.5-second latency regression, and a question that cost 177,090 tokens and returned a wrong answer. Four prompt-level fixes improved individual symptoms but kept the underlying problem alive: checkout information was stored as an unstructured text blob, so the agent had to repeatedly parse it at query time.</p>
 <div class="real-bug"><b>The fix that held:</b> a normalized <code>clean.allocation_items</code> table, built once from a full audit of 55 distinct item names, replaced repeated keyword parsing. The original question fell to 8,024 tokens and became correct — a 95.5% reduction. The lesson was broader than this one query: move stable structure into the data model.</div>
 <div class="chips"><span class="chip">token cost</span><span class="chip">data normalization</span><span class="chip">verifier</span></div>
-<div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/2026-08-06-token-burn-incident-audit.html" rel="noopener" target="_blank">full audit ↗</a></div>
+<div class="links"><a href="writing/token-burn-incident.html">full write-up ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/2026-08-06-token-burn-incident-audit.html" rel="noopener" target="_blank">full audit ↗</a></div>
 </div>
 <div class="log-item" id="deployment-verification-incident">
 <div class="log-head"><span class="build-no">follow-up</span><h3>When CI is green but the running app is still old</h3></div>
@@ -172,7 +172,7 @@
 <p>A later verification pass found two answers that incorrectly reported the deployment issue as still unresolved, even though it had already been fixed. The evidence was relevant, but the system had truncated the retrieved documentation at 500 characters—cutting off the resolution immediately before the word "Fixed." The first caution-oriented prompt fix restored correctness but created a new cost spike: one question reached 202,821 tokens.</p>
 <div class="real-bug"><b>The mechanism-level fix:</b> the problem was not one bad chunk. A dataset-wide check found 127 of roughly 532 chunks over the cap, some by more than 6,000 characters. Long chunks are now split during extraction; the re-run grew the collection from 532 to 769 chunks, with zero exceeding the cap. The verifier was also taught to distinguish contradiction from lack of confirmation, so it can say "verify further" without pretending that absence of evidence is evidence of incorrectness.</div>
 <div class="chips"><span class="chip">truncation</span><span class="chip">verifier scope</span><span class="chip">extraction pipeline</span></div>
-<div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/2026-08-10-stale-status-claim-incident-audit.html" rel="noopener" target="_blank">full audit ↗</a></div>
+<div class="links"><a href="writing/stale-status-claim-incident.html">full write-up ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/2026-08-10-stale-status-claim-incident-audit.html" rel="noopener" target="_blank">full audit ↗</a></div>
 </div>
 <div class="log-item" id="scratch-cleanup-and-observability">
 <div class="log-head"><span class="build-no">follow-up</span><h3>Memory, scratch lifecycle, and finer-grained cost observability</h3></div>
@@ -187,6 +187,13 @@
 <div class="real-bug"><b>Why this belongs in the build story:</b> the agent's answers about its own system are only as current and complete as the documentation pipeline behind them. Documentation is therefore treated as data with ingestion, indexing, cleanup, and verification — not as static written explanation sitting outside the application.</div>
 <div class="chips"><span class="chip">CI reliability</span><span class="chip">repo structure</span><span class="chip">RAG pipeline</span></div>
 <div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a></div>
+</div>
+<div class="log-item" id="verifier-verdict-enum-incident">
+<div class="log-head"><span class="build-no">incident</span><h3>Two prompt fixes that didn't work, and why "remember this prefix" never holds</h3></div>
+<p>The day the public demo launched, its first real question - "Tell me about this project?" - exposed a gap in a verifier fix that had already shipped and passed every regression case: a plausible, unconfirmed-not-contradicted claim was hard-failed with no softening, instead of the "Verify further:" framing that case was supposed to get. Reproduced directly, three times, outside the app: the prefix never appeared once, even as the verifier's own reasoning kept independently describing exactly the situation it exists for.</p>
+<div class="real-bug"><b>What actually fixed it:</b> two prompt-wording rewrites were tried and reproduction-tested first - six total runs, zero change in outcome. The real fix was structural: the boolean field plus a "remember to write this prefix" prose convention was replaced with a three-value enum (<code>supported</code> / <code>contradicted</code> / <code>unconfirmed</code>) the model must choose as a real tool argument, with the framing now attached in code afterward. Every external caller kept the exact same <code>(supported, reason)</code> shape it always had.</div>
+<div class="chips"><span class="chip">structured tool-calling</span><span class="chip">verifier</span><span class="chip">public demo</span></div>
+<div class="links"><a href="writing/verifier-verdict-enum-incident.html">full write-up ↗</a> &#160; <a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a></div>
 </div>
 </div>
 </section>

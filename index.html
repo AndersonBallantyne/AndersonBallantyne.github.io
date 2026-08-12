@@ -191,7 +191,7 @@
 <span class="chip">14 SQL migrations</span>
 <span class="chip">60 automated tests</span>
 <span class="chip">CI-gated</span>
-<span class="chip">3 documented live incident audits</span>
+<span class="chip">4 documented live incident audits</span>
 </div>
 <h3>What it does</h3>
 <ul class="overview-list"><li><b>Answers questions in plain English</b> by writing and running its own SQL against a real PostgreSQL database, behind a role that can only ever <code>SELECT</code>.</li><li><b>Finds thematically related results with no exact keyword match</b>, using pgvector semantic search over the underlying data.</li><li><b>Answers questions about its own build history and status</b> through semantic search over the project's documentation, kept current as the system grows.</li><li><b>Persists computed results for reuse</b> in a scratch workspace isolated to its own database role and schema, with age-based visibility into what has been left behind and a UI-only path to remove it.</li><li><b>Runs as a working chat application</b> through a Streamlit front end with persistent, tiered conversation memory and transparency into the tools an answer relied on.</li></ul>
@@ -331,6 +331,12 @@
 <span class="tag">on evidence boundaries</span>
 <h3>Supported by the evidence — but was the evidence complete?</h3>
 <span class="kw">truncation · verifier scope · extraction pipeline</span>
+<div class="more">read ↗</div>
+</a>
+<a class="post" href="writing.html#verifier-verdict-enum-incident">
+<span class="tag">on structured tool-calling</span>
+<h3>Two prompt fixes that didn't work — and the one that did</h3>
+<span class="kw">verdict enum · prose vs. schema · public demo</span>
 <div class="more">read ↗</div>
 </a>
 <a class="post" href="writing/build5-anonymization-incident.html">
