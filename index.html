@@ -172,7 +172,7 @@
 <section class="hero">
 <div class="wrap">
 <span class="eyebrow">whoami</span>
-<h1>I build reliable <span class="accentword">data systems</span> — and the <span class="accentword">AI tooling</span> that runs on top of them.<span aria-hidden="true" class="cursor"></span></h1>
+<h1>I build the <span class="accentword">data foundations</span> that make <span class="accentword">AI</span> useful.<span aria-hidden="true" class="cursor"></span></h1>
 <p class="lede">The Project is the working example: one Postgres data stack, one hand-built database agent, and seven builds that progressively add retrieval, observability, CI, a conversational interface, and independent verification. The point is not just to make an AI system answer questions — it is to make the system reproducible, constrained, observable, and honest about what its evidence does and does not support.</p>
 <div class="cta-row">
 <a class="btn btn-primary" href="https://sqltest01-xsbrz2cqxejyktbhe7ekzm.streamlit.app/" rel="noopener" target="_blank">Try the live demo ↗</a>
@@ -184,7 +184,7 @@
 <section id="overview">
 <div class="wrap">
 <span class="eyebrow">what this actually is</span>
-<p>the system is a natural-language interface to a real PostgreSQL database. A user asks a question in plain English; the agent selects the appropriate evidence path, generates or runs the necessary query, and answers from the result. The database connection used for normal querying is read-only, while a separate write-scoped role is limited to the agent's scratch workspace.</p>
+<p>The system is a natural-language interface to a real PostgreSQL database. A user asks a question in plain English; the agent selects the appropriate evidence path, generates or runs the necessary query, and answers from the result. The database connection used for normal querying is read-only, while a separate write-scoped role is limited to the agent's scratch workspace.</p>
 <p>The finished system runs end-to-end in Docker Compose: a real raw-to-clean data pipeline, PostgreSQL and pgvector, a Streamlit chat interface, persistent conversation memory, structured observability, CI, an evaluation harness, and a second agent that checks tool-backed answers against the evidence gathered for them.</p>
 <div class="overview-stats chips">
 <span class="chip">7 builds complete</span>
