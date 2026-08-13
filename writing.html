@@ -170,7 +170,7 @@ SIMILARITY_DISTANCE_THRESHOLD = 0.63
 <summary>View flow diagram</summary>
 <div class="diagram-body"><img alt="Build 4 flow diagram: structured JSONL tool-call logging feeding an eval harness and a metrics-history rollup." src="writing/build4-flow-diagram.png"/></div>
 </details>
-<div class="real-bug"><b>Real failure:</b> a live evaluation burned its turn budget because <code>describe_table</code> silently failed on a schema-qualified name. The fix was to make the tool's expected inputs and behavior explicit, rather than asking the model to guess how the tool should be used.</div>
+<div class="real-bug"><b>Real failure:</b> a live evaluation kept retrying and ran out of attempts, because <code>describe_table</code> was asked for a table using its full "schema.table" name (like <code>docs.chunks</code>) instead of just the table name (<code>chunks</code>) — the tool only recognized the short form, and gave back nothing, with no explanation why. The fix: state that limitation plainly in the tool's own description, instead of leaving the model to guess why its calls kept failing.</div>
 <details class="diagram">
 <summary>View code</summary>
 <div class="diagram-body"><pre class="code"><span class="cmt"># agent.py - the tool definition the model actually sees</span>
