@@ -84,6 +84,14 @@
   .btn-ghost:hover { background: var(--tint); }
   .btn-sm { font-size: 13px; padding: 0.5rem 1rem; }
 
+  .hero details.diagram { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); margin-top: 1.2rem; max-width: 640px; }
+  .hero details.diagram summary { cursor: pointer; padding: 0.7rem 1rem; font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 0.5rem; }
+  .hero details.diagram summary::-webkit-details-marker { display: none; }
+  .hero details.diagram summary::before { content: "\25B8"; transition: transform 0.15s; display: inline-block; }
+  .hero details.diagram[open] summary::before { transform: rotate(90deg); }
+  .hero details.diagram .diagram-body { padding: 0.2rem 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+  .hero details.diagram .diagram-body img { width: 100%; height: auto; display: block; border-radius: 6px; border: 1px solid var(--line); }
+
   /* ---- project overview (up front) ---- */
   .overview-list { list-style: none; margin: 0 0 1.6rem; padding: 0; }
   .overview-list li {
@@ -172,13 +180,17 @@
 <section class="hero">
 <div class="wrap">
 <span class="eyebrow">whoami</span>
-<h1>I build the <span class="accentword">data foundations</span> that make <span class="accentword">AI</span> useful.<span aria-hidden="true" class="cursor"></span></h1>
+<h1>I build the <span class="accentword">data foundations</span> that make <span class="accentword">AI</span> <span class="accentword">useful</span>.<span aria-hidden="true" class="cursor"></span></h1>
 <p class="lede">The Project is the working example: one Postgres data stack, one hand-built database agent, and seven builds that progressively add retrieval, observability, CI, a conversational interface, and independent verification. The point is not just to make an AI system answer questions — it is to make the system reproducible, constrained, observable, and honest about what its evidence does and does not support.</p>
 <div class="cta-row">
 <a class="btn btn-primary" href="https://sqltest01-xsbrz2cqxejyktbhe7ekzm.streamlit.app/" rel="noopener" target="_blank">Try the live demo ↗</a>
 <a class="btn btn-ghost" href="#work">See the system</a>
 <a class="btn btn-ghost" href="writing.html">Read the build log</a>
 </div>
+<details class="diagram">
+<summary>View screenshot</summary>
+<div class="diagram-body"><img alt="Screenshot of the live Ask-Your-Database Agent public demo answering 'What can you do?' with a real response describing its SQL query and schema-exploration capabilities against the appdb PostgreSQL database." src="live-demo-screenshot.png"/></div>
+</details>
 </div>
 </section>
 <section id="overview">

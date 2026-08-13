@@ -60,6 +60,14 @@
   .chip { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--accent-2); background: var(--tint); border-radius: 7px; padding: 0.25rem 0.6rem; }
   .log-item .links { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; margin-top: 0.4rem; }
 
+  details.diagram { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); margin: 0.7rem 0; }
+  details.diagram summary { cursor: pointer; padding: 0.7rem 1rem; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 0.5rem; }
+  details.diagram summary::-webkit-details-marker { display: none; }
+  details.diagram summary::before { content: "\25B8"; transition: transform 0.15s; display: inline-block; }
+  details.diagram[open] summary::before { transform: rotate(90deg); }
+  details.diagram .diagram-body { padding: 0.2rem 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+  details.diagram .diagram-body img { width: 100%; height: auto; display: block; border-radius: 6px; }
+
   footer { border-top: 1px solid var(--line); }
   footer .wrap { padding-block: 1.6rem; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--faint); }
 </style>
@@ -104,12 +112,20 @@
 <div class="log-item" id="build1">
 <div class="log-head"><span class="build-no">build 1</span><h3>Ask-Your-Database agent</h3></div>
 <p>The foundation is deliberately simple: a hand-built tool-use loop, no LangChain or agent framework, that turns a plain-English question into SQL and runs it through a dedicated read-only Postgres role. Tool-call limits and API-error handling keep the loop bounded. That read-only boundary becomes the project's spine: later builds add capability without giving the model a direct write path to the database.</p>
+<details class="diagram">
+<summary>View flow diagram</summary>
+<div class="diagram-body"><img alt="Build 1 flow diagram: the hand-built tool-use loop, from a plain-English question through SQL generation to a read-only Postgres role." src="writing/build1-flow-diagram.png"/></div>
+</details>
 <div class="chips"><span class="chip">tool use</span><span class="chip">read-only role</span></div>
 <div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a></div>
 </div>
 <div class="log-item" id="build2">
 <div class="log-head"><span class="build-no">build 2 · 2.5</span><h3>Raw-to-queryable pipeline + scratch workspace</h3></div>
 <p>A real equipment-allocation export moves through a raw staging schema into typed, clean Postgres data, with explicit handling for blanks and derived duration values. Build 2.5 adds a separate database role and scratch schema so the agent can persist computed results without extending its read-only privileges.</p>
+<details class="diagram">
+<summary>View flow diagram</summary>
+<div class="diagram-body"><img alt="Build 2 flow diagram: the raw-to-clean ETL pipeline and the scratch-workspace write path added in Build 2.5." src="writing/build2-flow-diagram.png"/></div>
+</details>
 <div class="real-bug"><b>Design principle:</b> reading and writing are separate capabilities with separate credentials. The scratch workspace is a controlled exception, not a general-purpose database connection.</div>
 <div class="chips"><span class="chip">ETL</span><span class="chip">idempotent</span><span class="chip">least privilege</span></div>
 <div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a></div>
@@ -117,6 +133,10 @@
 <div class="log-item" id="build3">
 <div class="log-head"><span class="build-no">build 3 · 3.5</span><h3>Retrieval-augmented agent + docs RAG</h3></div>
 <p>pgvector embeddings add semantic search over equipment summaries, allowing the agent to answer thematic questions where exact keyword matching is not enough. Build 3.5 applies the same idea to the project's own documentation, creating a searchable record of how the system was built.</p>
+<details class="diagram">
+<summary>View flow diagram</summary>
+<div class="diagram-body"><img alt="Build 3 flow diagram: an agent request routed between direct SQL and pgvector semantic search over equipment summaries and project documentation." src="writing/build3-flow-diagram.png"/></div>
+</details>
 <div class="real-bug"><b>Two boundaries became explicit:</b> similarity search needs a relevance cutoff because a top-5 result is not proof that a good match exists, and enumeration questions are not similarity questions. "List every X" and other complete/current requests are routed to direct SQL instead.</div>
 <div class="chips"><span class="chip">RAG</span><span class="chip">pgvector</span><span class="chip">distance threshold</span></div>
 <div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a></div>
@@ -124,6 +144,10 @@
 <div class="log-item" id="build4">
 <div class="log-head"><span class="build-no">build 4</span><h3>Observability &amp; eval harness</h3></div>
 <p>Tool calls move into structured JSON Lines, an end-to-end evaluation harness runs against the live agent, and a metrics rollup stores a history of tool usage, turns, and errors. The goal changes from "it worked" to "I can tell when behavior changes and investigate why."</p>
+<details class="diagram">
+<summary>View flow diagram</summary>
+<div class="diagram-body"><img alt="Build 4 flow diagram: structured JSONL tool-call logging feeding an eval harness and a metrics-history rollup." src="writing/build4-flow-diagram.png"/></div>
+</details>
 <div class="real-bug"><b>Real failure:</b> a live evaluation burned its turn budget because <code>describe_table</code> silently failed on a schema-qualified name. The fix was to make the tool's expected inputs and behavior explicit, rather than asking the model to guess how the tool should be used.</div>
 <div class="chips"><span class="chip">JSONL logging</span><span class="chip">eval harness</span><span class="chip">metrics history</span></div>
 <div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a></div>
@@ -131,19 +155,31 @@
 <div class="log-item" id="build5">
 <div class="log-head"><span class="build-no">build 5</span><h3>Reproducible deployment with CI</h3></div>
 <p>GitHub Actions proves that the schema, pipeline, and test suite can build from a clean environment. The build also forced a data-governance pivot: public-facing fixtures had to be safe, credentials had to be removed from history, and the repository had to become something another person could actually clone and reproduce.</p>
+<details class="diagram">
+<summary>View flow diagram</summary>
+<div class="diagram-body"><img alt="Build 5 flow diagram: GitHub Actions CI building the schema, pipeline, and test suite from a clean environment." src="writing/build5-flow-diagram.png"/></div>
+</details>
 <div class="real-bug"><b>What changed the project:</b> several problems existed only in a clean environment — missing migration coverage, tests depending on leftovers, and CI wiring that had never exercised the newest parts of the system. Reproducibility became a feature, not a final polish step.</div>
 <div class="chips"><span class="chip">CI/CD</span><span class="chip">reproducibility</span><span class="chip">data governance</span></div>
-<div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="writing/build5-anonymization-incident.html">anonymization write-up ↗</a></div>
+<div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="writing/build5-anonymization-incident.html">anonymization write-up ↗</a></div>
 </div>
 <div class="log-item" id="build6">
 <div class="log-head"><span class="build-no">build 6</span><h3>Conversational front end</h3></div>
 <p>Streamlit turns the existing agent into a persistent chat application. Hybrid tiered memory keeps recent rounds at full fidelity while older rounds collapse into summaries; chat history survives a container restart; and each answer can show which tools it used. The feature makes memory a first-class engineering problem rather than an invisible model detail.</p>
+<details class="diagram">
+<summary>View flow diagram</summary>
+<div class="diagram-body"><img alt="Build 6 flow diagram: the Streamlit chat front end with hybrid tiered conversation memory across container restarts." src="writing/build6-flow-diagram.png"/></div>
+</details>
 <div class="chips"><span class="chip">Streamlit</span><span class="chip">tiered memory</span><span class="chip">docker-compose</span></div>
 <div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a></div>
 </div>
 <div class="log-item" id="build7">
 <div class="log-head"><span class="build-no">build 7</span><h3>Verifier / critic agent</h3></div>
 <p>The second agent — the Verifier/Critic Agent — checks whether the primary agent's answer is supported by the tool evidence gathered for that question. It does not re-answer the question or add outside knowledge; it checks the answer against the evidence already gathered and surfaces a clear verified/unverified result.</p>
+<details class="diagram">
+<summary>View flow diagram</summary>
+<div class="diagram-body"><img alt="Build 7 flow diagram: the verifier/critic agent checking a proposed answer against tool evidence before it is surfaced." src="writing/build7-flow-diagram.png"/></div>
+</details>
 <div class="real-bug"><b>Live proof:</b> the verifier caught a correct five-camera list wrapped in unsupported real-world classifications such as "mirrorless" and "full-frame." It identified the unsupported claims specifically rather than treating the entire answer as simply wrong.</div>
 <div class="chips"><span class="chip">verify-before-surface</span><span class="chip">tool_choice</span><span class="chip">multi-agent</span></div>
 <div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a></div>
@@ -156,23 +192,31 @@
 <div class="log-item" id="token-burn-incident">
 <div class="log-head"><span class="build-no">incident</span><h3>The 177,090-token question: fix the data, not the prompt</h3></div>
 <p>A token-count UI feature surfaced a verifier false positive, a 36.5-second latency regression, and a question that cost 177,090 tokens and returned a wrong answer. Four prompt-level fixes improved individual symptoms but kept the underlying problem alive: checkout information was stored as an unstructured text blob, so the agent had to repeatedly parse it at query time.</p>
+<details class="diagram">
+<summary>View screenshot</summary>
+<div class="diagram-body"><img alt="Screenshot of the Ask-Your-Database Agent UI showing a wrong answer of 5 camera types, a red Unverified badge explaining the real contradiction in the evidence, and 177,090 total tokens across 9 tool calls." src="writing/token-burn-verifier-screenshot.png"/></div>
+</details>
 <div class="real-bug"><b>The fix that held:</b> a normalized <code>clean.allocation_items</code> table, built once from a full audit of 55 distinct item names, replaced repeated keyword parsing. The original question fell to 8,024 tokens and became correct — a 95.5% reduction. The lesson was broader than this one query: move stable structure into the data model.</div>
 <div class="chips"><span class="chip">token cost</span><span class="chip">data normalization</span><span class="chip">verifier</span></div>
-<div class="links"><a href="writing/token-burn-incident.html">full write-up ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/2026-08-06-token-burn-incident-audit.html" rel="noopener" target="_blank">full audit ↗</a></div>
+<div class="links"><a href="writing/token-burn-incident.html">full write-up ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/2026-08-06-token-burn-incident-audit.html" rel="noopener" target="_blank">full audit ↗</a></div>
 </div>
 <div class="log-item" id="deployment-verification-incident">
 <div class="log-head"><span class="build-no">follow-up</span><h3>When CI is green but the running app is still old</h3></div>
 <p>The fix above passed local tests and CI, but the browser-facing Streamlit service was still running a container created the previous day. A newly started process loaded the corrected code, but the already-running Streamlit service continued using the older code it had loaded when it started. One live question therefore ran against stale code and reached 270,961 tokens.</p>
+<details class="diagram">
+<summary>View screenshot</summary>
+<div class="diagram-body"><img alt="Screenshot of the Ask-Your-Database Agent UI showing the verifier's red Unverified message, itemizing all four unsupported claims in the migrations answer" src="writing/deployment-verification-verifier-screenshot.png"/></div>
+</details>
 <div class="real-bug"><b>The actual fix:</b> rebuild the image, force-recreate the service, and verify the container's creation time — not just the source file on disk. The same question then ran in 9,878 tokens, with a second live browser test at 15,799 tokens. The deployment lesson is now explicit: proving code is correct and proving the running service has that code are separate tests.</div>
 <div class="chips"><span class="chip">deployment verification</span><span class="chip">stale process</span><span class="chip">CI vs. production</span></div>
-<div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/2026-08-07-deployment-verification-incident-audit.html" rel="noopener" target="_blank">full audit ↗</a></div>
+<div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/2026-08-07-deployment-verification-incident-audit.html" rel="noopener" target="_blank">full audit ↗</a></div>
 </div>
 <div class="log-item" id="stale-status-claim-incident">
 <div class="log-head"><span class="build-no">incident</span><h3>When correct evidence is still incomplete</h3></div>
 <p>A later verification pass found two answers that incorrectly reported the deployment issue as still unresolved, even though it had already been fixed. The evidence was relevant, but the system had truncated the retrieved documentation at 500 characters—cutting off the resolution immediately before the word "Fixed." The first caution-oriented prompt fix restored correctness but created a new cost spike: one question reached 202,821 tokens.</p>
 <div class="real-bug"><b>The mechanism-level fix:</b> the problem was not one bad chunk. A dataset-wide check found 127 of roughly 532 chunks over the cap, some by more than 6,000 characters. Long chunks are now split during extraction; the re-run grew the collection from 532 to 769 chunks, with zero exceeding the cap. The verifier was also taught to distinguish contradiction from lack of confirmation, so it can say "verify further" without pretending that absence of evidence is evidence of incorrectness. Correction: that wording-based fix never actually fired live — a public-demo question exposed it, and the real fix replaced the prose convention with a forced categorical choice; see <a href="#verifier-verdict-enum-incident">the follow-up post below</a>.</div>
 <div class="chips"><span class="chip">truncation</span><span class="chip">verifier scope</span><span class="chip">extraction pipeline</span></div>
-<div class="links"><a href="writing/stale-status-claim-incident.html">full write-up ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/2026-08-10-stale-status-claim-incident-audit.html" rel="noopener" target="_blank">full audit ↗</a></div>
+<div class="links"><a href="writing/stale-status-claim-incident.html">full write-up ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="https://github.com/AndersonBallantyne/SQL_TEST_01/blob/main/docs/2026-08-10-stale-status-claim-incident-audit.html" rel="noopener" target="_blank">full audit ↗</a></div>
 </div>
 <div class="log-item" id="scratch-cleanup-and-observability">
 <div class="log-head"><span class="build-no">follow-up</span><h3>Memory, scratch lifecycle, and finer-grained cost observability</h3></div>
