@@ -95,16 +95,22 @@
   /* ---- project overview (up front) ---- */
   .overview-list { list-style: none; margin: 0 0 1.6rem; padding: 0; }
   .overview-list li {
-    position: relative; padding-left: 22px; margin-bottom: 0.85rem;
+    display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem;
     color: var(--muted); font-size: 0.96rem; max-width: 66ch; line-height: 1.6;
   }
-  .overview-list li::before {
-    content: ""; position: absolute; left: 0; top: 8px;
-    width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+  .overview-list .li-icon {
+    flex-shrink: 0; width: 30px; height: 30px; margin-top: 0.05rem;
+    border-radius: 8px; background: var(--tint);
+    display: flex; align-items: center; justify-content: center;
   }
+  .overview-list .li-icon svg { width: 16px; height: 16px; color: var(--accent); }
   .overview-list li b { color: var(--ink); }
   .overview-stats { margin: 1.4rem 0 2.2rem; }
-  #overview h3 { font-size: 1.05rem; margin: 2rem 0 1rem; }
+  #overview h3 {
+    font-size: 1.4rem; margin: 2.2rem 0 1.1rem; color: var(--accent);
+    display: flex; align-items: center; gap: 0.55rem;
+  }
+  #overview h3 svg { width: 22px; height: 22px; flex-shrink: 0; }
   #overview > .wrap > p { max-width: 66ch; color: var(--ink); }
 
   /* ---- flagship record ---- */
@@ -205,10 +211,23 @@
 <span class="chip">CI-gated</span>
 <span class="chip">4 documented live incident audits</span>
 </div>
-<h3>What it does</h3>
-<ul class="overview-list"><li><b>Answers questions in plain English</b> by writing and running its own SQL against a real PostgreSQL database, behind a role that can only ever <code>SELECT</code>.</li><li><b>Finds thematically related results with no exact keyword match</b>, using pgvector semantic search over the underlying data.</li><li><b>Answers questions about its own build history and status</b> through semantic search over the project's documentation, kept current as the system grows.</li><li><b>Persists computed results for reuse</b> in a scratch workspace isolated to its own database role and schema, with age-based visibility into what has been left behind and a UI-only path to remove it.</li><li><b>Runs as a working chat application</b> through a Streamlit front end with persistent, tiered conversation memory and transparency into the tools an answer relied on.</li></ul>
-<h3>What makes it stand out</h3>
-<ul class="overview-list"><li><b>Self-verification.</b> Every tool-backed response is checked by the project's second agent — the Verifier/Critic Agent — against the actual evidence gathered for the response, with a visible verified/unverified result and a plain-English reason. It is a distinct second agent in the stack, not simply another presentation layer for the first agent.</li><li><b>Full cost observability.</b> Tool calls and API turns are logged; token usage, latency, result size, and errors can be traced so a cost spike can be investigated rather than guessed at.</li><li><b>Least-privilege data access.</b> Two separate Postgres roles keep reading and writing distinct: one is strictly read-only for querying, while the other is scoped to the agent's scratch schema.</li><li><b>CI-gated correctness.</b> The full test suite and dedicated evaluation harness run from a clean environment, covering both the main agent's behavior and the verifier's judgment.</li><li><b>Incident-driven engineering.</b> Real issues have been found through live usage after deployment, then root-caused, fixed, and re-verified against a freshly deployed instance. The incidents are documented rather than hidden behind a polished final result.</li><li><b>Documentation that stays current.</b> The command reference and project history are maintained as the system grows and are kept aligned with the searchable documentation collection, so the agent's answers about its own system have a maintained source behind them.</li></ul>
+<h3><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>What it does</h3>
+<ul class="overview-list">
+<li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></span><span><b>Answers questions in plain English</b> by writing and running its own SQL against a real PostgreSQL database, behind a role that can only ever <code>SELECT</code>.</span></li>
+<li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" x2="16.65" y1="21" y2="16.65"></line></svg></span><span><b>Finds thematically related results with no exact keyword match</b>, using pgvector semantic search over the underlying data.</span></li>
+<li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line></svg></span><span><b>Answers questions about its own build history and status</b> through semantic search over the project's documentation, kept current as the system grows.</span></li>
+<li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg></span><span><b>Persists computed results for reuse</b> in a scratch workspace isolated to its own database role and schema, with age-based visibility into what has been left behind and a UI-only path to remove it.</span></li>
+<li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" x2="20" y1="19" y2="19"></line></svg></span><span><b>Runs as a working chat application</b> through a Streamlit front end with persistent, tiered conversation memory and transparency into the tools an answer relied on.</span></li>
+</ul>
+<h3><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>What makes it stand out</h3>
+<ul class="overview-list">
+<li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span><span><b>Self-verification.</b> Every tool-backed response is checked by the project's second agent — the Verifier/Critic Agent — against the actual evidence gathered for the response, with a visible verified/unverified result and a plain-English reason. It is a distinct second agent in the stack, not simply another presentation layer for the first agent.</span></li>
+<li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></span><span><b>Full cost observability.</b> Tool calls and API turns are logged; token usage, latency, result size, and errors can be traced so a cost spike can be investigated rather than guessed at.</span></li>
+<li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><rect height="11" rx="2" ry="2" width="18" x="3" y="11"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span><span><b>Least-privilege data access.</b> Two separate Postgres roles keep reading and writing distinct: one is strictly read-only for querying, while the other is scoped to the agent's scratch schema.</span></li>
+<li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></span><span><b>CI-gated correctness.</b> The full test suite and dedicated evaluation harness run from a clean environment, covering both the main agent's behavior and the verifier's judgment.</span></li>
+<li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg></span><span><b>Incident-driven engineering.</b> Real issues have been found through live usage after deployment, then root-caused, fixed, and re-verified against a freshly deployed instance. The incidents are documented rather than hidden behind a polished final result.</span></li>
+<li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></span><span><b>Documentation that stays current.</b> The command reference and project history are maintained as the system grows and are kept aligned with the searchable documentation collection, so the agent's answers about its own system have a maintained source behind them.</span></li>
+</ul>
 </div>
 </section>
 <section id="work">
