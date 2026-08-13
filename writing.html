@@ -68,6 +68,10 @@
   details.diagram .diagram-body { padding: 0.2rem 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
   details.diagram .diagram-body img { width: 100%; height: auto; display: block; border-radius: 6px; }
 
+  pre.code { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-family: "IBM Plex Mono", monospace; font-size: 12px; line-height: 1.55; margin: 0; }
+  pre.code .cmt { color: var(--faint); }
+  details.diagram .diagram-body pre.code { margin: 0; }
+
   footer { border-top: 1px solid var(--line); }
   footer .wrap { padding-block: 1.6rem; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--faint); }
 </style>
@@ -127,6 +131,17 @@
 <div class="diagram-body"><img alt="Build 2 flow diagram: the raw-to-clean ETL pipeline and the scratch-workspace write path added in Build 2.5." src="writing/build2-flow-diagram.png"/></div>
 </details>
 <div class="real-bug"><b>Design principle:</b> reading and writing are separate capabilities with separate credentials. The scratch workspace is a controlled exception, not a general-purpose database connection.</div>
+<details class="diagram">
+<summary>View code</summary>
+<div class="diagram-body"><pre class="code"><span class="cmt"># migrations/003_readonly_role.sql</span>
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO appdb_reader;
+
+<span class="cmt"># migrations/006_agent_scratch_role.sql</span>
+CREATE ROLE appdb_agent_writer WITH LOGIN;
+GRANT CONNECT ON DATABASE appdb TO appdb_agent_writer;
+<span class="cmt"># write access is then scoped to agent_scratch only (migration 007) -
+# never an extension of appdb_reader's own grants</span></pre></div>
+</details>
 <div class="chips"><span class="chip">ETL</span><span class="chip">idempotent</span><span class="chip">least privilege</span></div>
 <div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a></div>
 </div>
@@ -138,6 +153,13 @@
 <div class="diagram-body"><img alt="Build 3 flow diagram: an agent request routed between direct SQL and pgvector semantic search over equipment summaries and project documentation." src="writing/build3-flow-diagram.png"/></div>
 </details>
 <div class="real-bug"><b>Two boundaries became explicit:</b> similarity search needs a relevance cutoff because a top-5 result is not proof that a good match exists, and enumeration questions are not similarity questions. "List every X" and other complete/current requests are routed to direct SQL instead.</div>
+<details class="diagram">
+<summary>View code</summary>
+<div class="diagram-body"><pre class="code"><span class="cmt"># tools.py</span>
+SIMILARITY_DISTANCE_THRESHOLD = 0.63
+<span class="cmt"># below this distance = relevant enough to return;
+# above it, search_summaries reports no match instead of guessing</span></pre></div>
+</details>
 <div class="chips"><span class="chip">RAG</span><span class="chip">pgvector</span><span class="chip">distance threshold</span></div>
 <div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a></div>
 </div>
@@ -149,6 +171,17 @@
 <div class="diagram-body"><img alt="Build 4 flow diagram: structured JSONL tool-call logging feeding an eval harness and a metrics-history rollup." src="writing/build4-flow-diagram.png"/></div>
 </details>
 <div class="real-bug"><b>Real failure:</b> a live evaluation burned its turn budget because <code>describe_table</code> silently failed on a schema-qualified name. The fix was to make the tool's expected inputs and behavior explicit, rather than asking the model to guess how the tool should be used.</div>
+<details class="diagram">
+<summary>View code</summary>
+<div class="diagram-body"><pre class="code"><span class="cmt"># agent.py - the tool definition the model actually sees</span>
+{
+  "name": "describe_table",
+  "description": "... Matches on the bare table name only - it
+   searches across all schemas at once, so a schema-qualified
+   name (e.g. 'docs.chunks') will never match and returns an
+   empty list."
+}</pre></div>
+</details>
 <div class="chips"><span class="chip">JSONL logging</span><span class="chip">eval harness</span><span class="chip">metrics history</span></div>
 <div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a></div>
 </div>
@@ -160,6 +193,18 @@
 <div class="diagram-body"><img alt="Build 5 flow diagram: GitHub Actions CI building the schema, pipeline, and test suite from a clean environment." src="writing/build5-flow-diagram.png"/></div>
 </details>
 <div class="real-bug"><b>What changed the project:</b> several problems existed only in a clean environment — missing migration coverage, tests depending on leftovers, and CI wiring that had never exercised the newest parts of the system. Reproducibility became a feature, not a final polish step.</div>
+<details class="diagram">
+<summary>View code</summary>
+<div class="diagram-body"><pre class="code"><span class="cmt"># .github/workflows/ci.yml</span>
+for f in migrations/001_schema.sql migrations/002_seed.sql \
+         migrations/003_readonly_role.sql ... \
+         migrations/015_demo_token_log.sql; do
+  echo "Applying $f"
+  psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f "$f"
+done
+<span class="cmt"># every migration, applied in order, from a genuinely empty
+# database - on every push, not just before a release</span></pre></div>
+</details>
 <div class="chips"><span class="chip">CI/CD</span><span class="chip">reproducibility</span><span class="chip">data governance</span></div>
 <div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a>   <a href="writing/build5-anonymization-incident.html">anonymization write-up ↗</a></div>
 </div>
@@ -181,6 +226,15 @@
 <div class="diagram-body"><img alt="Build 7 flow diagram: the verifier/critic agent checking a proposed answer against tool evidence before it is surfaced." src="writing/build7-flow-diagram.png"/></div>
 </details>
 <div class="real-bug"><b>Live proof:</b> the verifier caught a correct five-camera list wrapped in unsupported real-world classifications such as "mirrorless" and "full-frame." It identified the unsupported claims specifically rather than treating the entire answer as simply wrong.</div>
+<details class="diagram">
+<summary>View code</summary>
+<div class="diagram-body"><pre class="code"><span class="cmt"># agent.py - SYSTEM_PROMPT</span>
+"This grounding rule isn't specific to search_docs - it applies
+ to every tool's evidence, including run_sql_query. State only
+ what a query result actually contains; don't enrich it with
+ outside knowledge you happen to have, even if that knowledge
+ is true."</pre></div>
+</details>
 <div class="chips"><span class="chip">verify-before-surface</span><span class="chip">tool_choice</span><span class="chip">multi-agent</span></div>
 <div class="links"><a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a></div>
 </div>
@@ -235,7 +289,7 @@
 <div class="log-item" id="verifier-verdict-enum-incident">
 <div class="log-head"><span class="build-no">incident</span><h3>Two prompt fixes that didn't work, and why "remember this prefix" never holds</h3></div>
 <p>The day the public demo launched, its first real question - "Tell me about this project?" - exposed a gap in a verifier fix that had already shipped and passed every regression case: a plausible, unconfirmed-not-contradicted claim was hard-failed with no softening, instead of the "Verify further:" framing that case was supposed to get. Reproduced directly, three times, outside the app: the prefix never appeared once, even as the verifier's own reasoning kept independently describing exactly the situation it exists for.</p>
-<div class="real-bug"><b>What actually fixed it:</b> two prompt-wording rewrites were tried and reproduction-tested first - six total runs, zero change in outcome. The real fix was structural: the boolean field plus a "remember to write this prefix" prose convention was replaced with a three-value enum (<code>supported</code> / <code>contradicted</code> / <code>unconfirmed</code>) the model must choose as a real tool argument, with the framing now attached in code afterward. Every external caller kept the exact same <code>(supported, reason)</code> shape it always had.</div>
+<div class="real-bug"><b>What actually fixed it:</b> two wording rewrites were tried and tested first - six total runs, zero change in outcome. The real fix changed the mechanism, not the wording: instead of a plain yes/no answer plus a "remember to add this warning" writing habit, the model now has to explicitly pick one of three options - supported, contradicted, or unconfirmed - as part of its actual answer. The system then decides how to phrase the result based on that choice, not on the model remembering to. Nothing downstream changed: the verified/unverified badge you see still works exactly the same way it always did.</div>
 <div class="chips"><span class="chip">structured tool-calling</span><span class="chip">verifier</span><span class="chip">public demo</span></div>
 <div class="links"><a href="writing/verifier-verdict-enum-incident.html">full write-up ↗</a> &#160; <a href="https://github.com/AndersonBallantyne/SQL_TEST_01" rel="noopener" target="_blank">repo ↗</a></div>
 </div>

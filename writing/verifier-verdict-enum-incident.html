@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Two Prompt Fixes That Didn't Work, and Why "Remember to Write This Prefix" Never Holds — Anderson Ballantyne</title>
-<meta name="description" content="A public-demo question exposed a verifier gap the 2026-08-10 fix was supposed to have closed. Two prose-wording fixes were tried and reproduction-tested first - neither worked. The actual fix replaced a boolean plus a text convention with a categorical tool argument." />
+<meta name="description" content="A public-demo question exposed a verifier gap the 2026-08-10 fix was supposed to have closed. Two wording fixes were tried and reproduction-tested first - neither worked. The actual fix replaced a boolean plus a text convention with a categorical tool argument." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -92,7 +92,7 @@
   <div class="wrap">
     <span class="kicker">field notes &middot; public demo &middot; verifier design</span>
     <h1 class="title">Two Prompt Fixes That Didn't Work, and Why "Remember to Write This Prefix" Never Holds</h1>
-    <p class="dek">The day the live public demo launched, the first real question exposed a gap in a fix that had already shipped and passed every existing test. Two prose-wording rewrites were tried and reproduction-tested first, back to back - neither changed the outcome. The fix that actually worked replaced a text convention with a categorical tool argument.</p>
+    <p class="dek">The day the live public demo launched, the first real question exposed a gap in a fix that had already shipped and passed every existing test. Two wording rewrites were tried and reproduction-tested first, back to back - neither changed the outcome. The fix that actually worked replaced a text convention with a categorical tool argument.</p>
     <div class="meta"><span>SQL_TEST_01 &middot; Build 7 follow-up</span><span>~6 min read</span></div>
 
     <p>The 2026-08-10 fix (see the previous post) taught the verifier to tell two situations apart: a claim that actively <b>contradicts</b> the tool evidence, and a claim the evidence simply doesn't confirm or deny. The second case was meant to get a softened reason, prefixed <code>"Verify further:"</code>, instead of a flat unsupported verdict. It passed all five regression cases at the time. It had never actually been exercised live by a case built for exactly that gap - until the day the public demo went live and someone asked it the most natural question there is.</p>
@@ -118,9 +118,9 @@
     <p>Two wording rewrites producing an identical result each time is not evidence that the wording is almost right - it is evidence that wording was never the actual lever. Asking a fast model to remember a text-formatting convention ("start your answer with this exact phrase") buried inside a longer set of rules is not something structured tool-calling reliably holds onto, regardless of how the surrounding rule is worded.</p>
 
     <h2>The fix that worked</h2>
-    <p>The boolean <code>supported</code> field, plus a prose instruction to prefix <code>reason</code> under specific conditions, was replaced with a three-value enum the model has to choose as a real tool argument: <code>"supported"</code>, <code>"contradicted"</code>, or <code>"unconfirmed"</code>. The Python code - not the model's prose habits - now derives the caller-facing <code>(supported, reason)</code> tuple and attaches the <code>"Verify further:"</code> framing when the verdict is <code>"unconfirmed"</code>.</p>
+    <p>Instead of a plain yes/no field plus a writing habit ("remember to add this phrase"), the model now has to explicitly choose one of three options as part of its answer: supported, contradicted, or unconfirmed. The code - not the model's memory for wording - decides afterward whether to add the "Verify further:" warning, based on which option was chosen. None of this shows outside the verifier itself: the badge you see, and everything else that uses this result, still just gets a plain yes/no, exactly like before.</p>
 
-    <pre class="code"><span class="cmt"># verify_answer.py - before: a boolean plus a prose convention</span>
+    <pre class="code"><span class="cmt"># verify_answer.py - before: a boolean plus a wording convention</span>
 "supported": { "type": "boolean" }
 <span class="cmt"># prompt: "...start reason with 'Verify further:' for that case"
 # -&gt; the model has to remember a text-formatting habit under load</span>
@@ -138,13 +138,13 @@
       <div class="diagram-body">
         <svg viewBox="0 0 640 220" role="img" aria-labelledby="verdictTitle verdictDesc">
           <title id="verdictTitle">Before and after: where the contradicted-vs-unconfirmed distinction actually lives</title>
-          <desc id="verdictDesc">Before, a boolean verdict plus a prose instruction to prefix the reason text - the model must both classify and remember a formatting habit, and only the classification reliably happened. After, a three-value enum forces the classification as a real tool argument, and code derives the framing.</desc>
+          <desc id="verdictDesc">Before, a boolean verdict plus a wording instruction to prefix the reason text - the model must both classify and remember a formatting habit, and only the classification reliably happened. After, a three-value enum forces the classification as a real tool argument, and code derives the framing.</desc>
           <defs>
             <marker id="vdArw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
               <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
             </marker>
           </defs>
-          <text x="12" y="24" font-family="'IBM Plex Mono', monospace" font-size="11" fill="var(--warn)">before &middot; boolean + prose convention</text>
+          <text x="12" y="24" font-family="'IBM Plex Mono', monospace" font-size="11" fill="var(--warn)">before &middot; boolean + wording convention</text>
           <rect x="10" y="34" width="170" height="50" rx="8" fill="var(--panel)" stroke="var(--warn)" stroke-width="1" />
           <text x="95" y="55" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12" font-weight="600" fill="var(--ink)">model reasons</text>
           <text x="95" y="72" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">correctly, in reason text</text>
@@ -168,7 +168,7 @@
           <line x1="405" y1="165" x2="460" y2="165" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#vdArw)" />
           <rect x="460" y="140" width="160" height="50" rx="8" fill="var(--good-tint)" stroke="var(--good)" stroke-width="1.4" />
           <text x="540" y="161" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-size="12" font-weight="600" fill="var(--ink)">code adds prefix</text>
-          <text x="540" y="178" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">reliable, not a prose habit</text>
+          <text x="540" y="178" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="var(--muted)">reliable, not a wording habit</text>
         </svg>
       </div>
     </details>
@@ -181,7 +181,7 @@
       <ol>
         <li><b>Reproduce before rewriting.</b> Two prompt-only fixes were tried and disproven by direct reproduction before reaching for a structural change - neither wasted more than one test cycle.</li>
         <li><b>A flat outcome across rewrites is itself a finding.</b> Six identical results across two different wordings ruled out "the wording is almost right" and pointed at the mechanism instead.</li>
-        <li><b>Push classification into the schema, not the prose.</b> Structured tool-calling is reliable at forcing a categorical choice; it is not reliable at enforcing a remembered text convention layered on top of one.</li>
+        <li><b>Push classification into the schema, not the wording.</b> Structured tool-calling is reliable at forcing a categorical choice; it is not reliable at enforcing a remembered text convention layered on top of one.</li>
         <li><b>Keep the external contract stable while fixing the internals.</b> Every caller of <code>verify_answer()</code> still receives the same <code>(supported, reason)</code> shape it always did - the fix moved where the distinction gets made, not what any other file needs to know about it.</li>
       </ol>
     </div>
