@@ -188,6 +188,8 @@ outright.
 
     <div class="callout good"><b>Re-verified on the exact real case:</b> the badge still reads unsupported (this check still can't confirm the claim from what it was given), but the reason now says <em>"Verify further: &hellip; which has no visibility into any earlier schema queries that may have been run"</em> — not a claim that the answer is wrong. All five existing regression cases, including a hard-contradiction case built specifically to stay unqualified, still pass with the new wording.</div>
 
+    <div class="callout warn"><b>Correction:</b> this specific fix didn't hold. Passing every regression case turned out not to mean the wording actually fired on a real, unrehearsed question — the first one the public demo ever got asked exposed it: the model's own reasoning kept describing exactly the "not confirmed, not contradicted" case above, and the verdict still came back a flat, unqualified <code>unsupported</code> anyway, with no <code>"Verify further:"</code> softening. A boolean plus a "remember to write this prefix" prose instruction turned out not to be something structured tool-calling reliably holds onto. The actual fix, and the full reproduction that found this, is in <a href="verifier-verdict-enum-incident.html">the follow-up post</a>.</div>
+
     <h2>Same day, in brief</h2>
     <p>Three smaller pieces closed out the same day, each triggered directly by one of the findings above rather than planned in advance:</p>
     <ul>

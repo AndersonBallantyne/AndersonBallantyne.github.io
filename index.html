@@ -247,8 +247,8 @@
 </div>
 </div>
 <div class="field">
-<div class="field-key">proof points</div>
-<div class="field-val">A live token-burn incident fell from 177,090 to 8,024 tokens after the underlying checkout data was normalized, while the wrong answer was fixed; a separate deployment-verification failure showed why a green CI run is not proof that a long-running service has loaded the new code; later fixes addressed history compounding, retrieval routing, evidence grounding, documentation truncation, and scratch-workspace lifecycle.</div>
+<div class="field-key">the central engineering lesson</div>
+<div class="field-val">The agent got better when the system underneath it got better. The project's biggest reliability and cost problems were not solved by endlessly expanding the prompt. A 177,090-token wrong-answer case led to normalized data; a green-CI-but-stale-service failure led to explicit deployment verification; a history-compounding bug led to cleaner memory boundaries; and a documentation-truncation incident led to extraction-time chunk splitting. The pattern is consistent: use the model where it adds value, but move repeatable structure into data, code, tooling, and tests whenever that is the stronger boundary.</div>
 </div>
 <div class="record-actions">
 <a class="btn btn-primary btn-sm" href="https://sqltest01-xsbrz2cqxejyktbhe7ekzm.streamlit.app/" rel="noopener" target="_blank">Live demo ↗</a>
