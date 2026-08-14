@@ -104,7 +104,7 @@
 
   /* ---- real-data sparkline ---- */
   .data-strip { margin: 1.6rem 0 0; }
-  .data-strip .sparkline { max-width: 320px; display: block; }
+  .data-strip .sparkline { max-width: 420px; display: block; }
   .data-strip .caption { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--faint); margin-top: 0.5rem; }
 
   .hero details.diagram { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); margin-top: 1.2rem; max-width: 640px; }
@@ -221,14 +221,10 @@
 <div class="micro-demo-label"><span>sample exchange &middot; illustrative, not live</span><a href="https://sqltest01-xsbrz2cqxejyktbhe7ekzm.streamlit.app/" rel="noopener" target="_blank">ask it yourself &#8599;</a></div>
 <div class="md-line"><span class="md-prompt">&rsaquo;</span> <span id="mdTyped"></span><span aria-hidden="true" class="md-caret"></span></div>
 <div class="md-answer" hidden="" id="mdAnswer">
-<p>333 &mdash; more Monday checkouts than any other day of the week.</p>
+<p>DRAW leads with 128 checkouts, ahead of STDA (122) and MDIA (102).</p>
 <span class="md-badge">&#10003; Verified against tool evidence</span>
 </div>
 </div>
-<details class="diagram">
-<summary>View app screenshot</summary>
-<div class="diagram-body"><img alt="Screenshot of the live Ask-Your-Database Agent public demo answering 'What can you do?' with a real response describing its SQL query and schema-exploration capabilities against the appdb PostgreSQL database." src="live-demo-screenshot.png"/></div>
-</details>
 </div>
 </section>
 <section id="overview">
@@ -244,25 +240,33 @@
 <span class="chip chip-warn">4 documented live incident audits</span>
 </div>
 <div class="data-strip">
-<svg aria-label="Real checkout counts by day of week: Monday 333, Tuesday 308, Wednesday 266, Thursday 265, Friday 320, Saturday 43, Sunday 0 - Monday is the busiest day" class="sparkline" role="img" viewbox="0 0 288 112">
-<line stroke="var(--line)" stroke-width="1" x1="6" x2="278" y1="90" y2="90"></line>
-<text fill="var(--good)" font-family="'IBM Plex Mono', monospace" font-size="11" font-weight="700" text-anchor="middle" x="24" y="16">333</text>
-<rect fill="var(--good)" height="70" rx="3" width="28" x="10" y="20"></rect>
-<rect fill="var(--tint)" height="64.7" rx="3" stroke="var(--line)" width="28" x="48" y="25.3"></rect>
-<rect fill="var(--tint)" height="55.9" rx="3" stroke="var(--line)" width="28" x="86" y="34.1"></rect>
-<rect fill="var(--tint)" height="55.7" rx="3" stroke="var(--line)" width="28" x="124" y="34.3"></rect>
-<rect fill="var(--tint)" height="67.3" rx="3" stroke="var(--line)" width="28" x="162" y="22.7"></rect>
-<rect fill="var(--tint)" height="9" rx="2" stroke="var(--line)" width="28" x="200" y="81"></rect>
-<rect fill="var(--tint)" height="2" rx="1" stroke="var(--line)" width="28" x="238" y="88"></rect>
-<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="10" text-anchor="middle" x="24" y="102">Mon</text>
-<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="10" text-anchor="middle" x="62" y="102">Tue</text>
-<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="10" text-anchor="middle" x="100" y="102">Wed</text>
-<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="10" text-anchor="middle" x="138" y="102">Thu</text>
-<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="10" text-anchor="middle" x="176" y="102">Fri</text>
-<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="10" text-anchor="middle" x="214" y="102">Sat</text>
-<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="10" text-anchor="middle" x="252" y="102">Sun</text>
+<svg aria-label="Real checkout counts by department, top 10: DRAW 128, STDA 122, MDIA 102, ANIM 90, VIZD 79, INDD 78, GNRL 29, CRFT 23, SPAC 21, DGTL 18 - DRAW, STDA, and MDIA are the top 3" class="sparkline" role="img" viewbox="0 0 380 112">
+<line stroke="var(--line)" stroke-width="1" x1="6" x2="370" y1="90" y2="90"></line>
+<text fill="var(--good)" font-family="'IBM Plex Mono', monospace" font-size="11" font-weight="700" text-anchor="middle" x="21" y="14">128</text>
+<rect fill="var(--good)" height="70" rx="3" width="26" x="8" y="20"></rect>
+<text fill="var(--good)" font-family="'IBM Plex Mono', monospace" font-size="11" font-weight="700" text-anchor="middle" x="57.4" y="17.3">122</text>
+<rect fill="var(--good)" height="66.7" rx="3" width="26" x="44.4" y="23.3"></rect>
+<text fill="var(--good)" font-family="'IBM Plex Mono', monospace" font-size="11" font-weight="700" text-anchor="middle" x="93.8" y="28.2">102</text>
+<rect fill="var(--good)" height="55.8" rx="3" width="26" x="80.8" y="34.2"></rect>
+<rect fill="var(--tint)" height="49.2" rx="3" stroke="var(--line)" width="26" x="117.2" y="40.8"></rect>
+<rect fill="var(--tint)" height="43.2" rx="3" stroke="var(--line)" width="26" x="153.6" y="46.8"></rect>
+<rect fill="var(--tint)" height="42.7" rx="3" stroke="var(--line)" width="26" x="190" y="47.3"></rect>
+<rect fill="var(--tint)" height="15.9" rx="3" stroke="var(--line)" width="26" x="226.4" y="74.1"></rect>
+<rect fill="var(--tint)" height="12.6" rx="3" stroke="var(--line)" width="26" x="262.8" y="77.4"></rect>
+<rect fill="var(--tint)" height="11.5" rx="3" stroke="var(--line)" width="26" x="299.2" y="78.5"></rect>
+<rect fill="var(--tint)" height="9.8" rx="3" stroke="var(--line)" width="26" x="335.6" y="80.2"></rect>
+<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="9" text-anchor="middle" x="21" y="102">DRAW</text>
+<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="9" text-anchor="middle" x="57.4" y="102">STDA</text>
+<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="9" text-anchor="middle" x="93.8" y="102">MDIA</text>
+<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="9" text-anchor="middle" x="130.2" y="102">ANIM</text>
+<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="9" text-anchor="middle" x="166.6" y="102">VIZD</text>
+<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="9" text-anchor="middle" x="203" y="102">INDD</text>
+<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="9" text-anchor="middle" x="239.4" y="102">GNRL</text>
+<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="9" text-anchor="middle" x="275.8" y="102">CRFT</text>
+<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="9" text-anchor="middle" x="312.2" y="102">SPAC</text>
+<text fill="var(--faint)" font-family="'IBM Plex Mono', monospace" font-size="9" text-anchor="middle" x="348.6" y="102">DGTL</text>
 </svg>
-<p class="caption">real checkout activity by day of week, from the project's own dataset &mdash; Monday, not Friday, is the busiest day</p>
+<p class="caption">real checkout volume by department, top 10 of the project's own dataset &mdash; DRAW, STDA, and MDIA lead</p>
 </div>
 <h3 style="margin-top:2.4rem;"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>What it does</h3>
 <ul class="overview-list">
@@ -272,6 +276,10 @@
 <li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg></span><span><b>Persists computed results for reuse</b> in a scratch workspace isolated to its own database role and schema, with age-based visibility into what has been left behind and a UI-only path to remove it.</span></li>
 <li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" x2="20" y1="19" y2="19"></line></svg></span><span><b>Runs as a working chat application</b> through a Streamlit front end with persistent, tiered conversation memory and transparency into the tools an answer relied on.</span></li>
 </ul>
+<details class="diagram" open="">
+<summary>View app screenshot</summary>
+<div class="diagram-body"><img alt="Screenshot of the live Ask-Your-Database Agent public demo answering 'Give me stats on the top 3 department usage' with a real results table (DRAW 128, STDA 122, MDIA 102 checkouts) and generated insights." src="live-demo-screenshot.png"/></div>
+</details>
 <h3><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>What makes it stand out</h3>
 <ul class="overview-list">
 <li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span><span><b>Self-verification.</b> Every tool-backed response is checked by the project's second agent — the Verifier/Critic Agent — against the actual evidence gathered for the response, with a visible verified/unverified result and a plain-English reason. It is a distinct second agent in the stack, not simply another presentation layer for the first agent.</span></li>
@@ -459,7 +467,7 @@
 </footer>
 <script>
 (function () {
-  var text = "How many checkouts happen on Mondays?";
+  var text = "Give me stats on the top 3 department usage";
   var el = document.getElementById('mdTyped');
   var answer = document.getElementById('mdAnswer');
   if (!el || !answer) return;
