@@ -107,13 +107,13 @@
   .data-strip .sparkline { max-width: 420px; display: block; }
   .data-strip .caption { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--faint); margin-top: 0.5rem; }
 
-  .hero details.diagram { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); margin-top: 1.2rem; max-width: 640px; }
-  .hero details.diagram summary { cursor: pointer; padding: 0.7rem 1rem; font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 0.5rem; }
-  .hero details.diagram summary::-webkit-details-marker { display: none; }
-  .hero details.diagram summary::before { content: "\25B8"; transition: transform 0.15s; display: inline-block; }
-  .hero details.diagram[open] summary::before { transform: rotate(90deg); }
-  .hero details.diagram .diagram-body { padding: 0.2rem 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
-  .hero details.diagram .diagram-body img { width: 100%; height: auto; display: block; border-radius: 6px; border: 1px solid var(--line); }
+  details.diagram { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); margin-top: 1.2rem; max-width: 640px; }
+  details.diagram summary { cursor: pointer; padding: 0.7rem 1rem; font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 0.5rem; }
+  details.diagram summary::-webkit-details-marker { display: none; }
+  details.diagram summary::before { content: "\25B8"; transition: transform 0.15s; display: inline-block; }
+  details.diagram[open] summary::before { transform: rotate(90deg); }
+  details.diagram .diagram-body { padding: 0.2rem 1rem 1rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+  details.diagram .diagram-body img { width: 100%; height: auto; display: block; border-radius: 10px; border: 1px solid var(--line); }
 
   /* ---- project overview (up front) ---- */
   .overview-list { list-style: none; margin: 0 0 1.6rem; padding: 0; }
@@ -289,7 +289,7 @@
 <li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg></span><span><b>Incident-driven engineering.</b> Real issues have been found through live usage after deployment, then root-caused, fixed, and re-verified against a freshly deployed instance. The incidents are documented rather than hidden behind a polished final result.</span></li>
 <li><span class="li-icon"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></span><span><b>Documentation that stays current.</b> The command reference and project history are maintained as the system grows and are kept aligned with the searchable documentation collection, so the agent's answers about its own system have a maintained source behind them.</span></li>
 </ul>
-<details class="diagram">
+<details class="diagram" open="">
 <summary>View docs-search example</summary>
 <div class="diagram-body"><img alt="Screenshot of the live Ask-Your-Database Agent public demo answering 'What does Build 7 add to the project?' by retrieving from the project's own documentation, showing a real, verified answer grounded in the docs." src="docs-search-screenshot.png"/></div>
 </details>
