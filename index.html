@@ -61,7 +61,16 @@
   .nav-links { display: flex; gap: 1.4rem; font-family: "IBM Plex Mono", monospace; font-size: 13px; }
   .nav-links a { color: var(--muted); }
   .nav-links a:hover { color: var(--accent); text-decoration: none; }
-  @media (max-width: 560px) { .nav-links { display: none; } }
+  .nav-toggle { display: none; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); cursor: pointer; }
+  .nav-toggle svg { width: 18px; height: 18px; display: block; }
+  @media (max-width: 560px) {
+    .nav-toggle { display: inline-flex; }
+    .nav-inner { position: relative; }
+    .nav-links { display: none; position: absolute; top: calc(100% + 10px); right: 0; flex-direction: column; gap: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 0.5rem 0; min-width: 160px; box-shadow: 0 10px 24px rgba(20,20,16,0.12); }
+    .nav-links.open { display: flex; }
+    .nav-links a { padding: 0.55rem 1.1rem; }
+    .nav-toggle[aria-expanded="true"] { background: var(--tint); border-color: var(--accent); color: var(--accent); }
+  }
 
   section { padding-block: clamp(3rem, 8vw, 5.5rem); }
   section + section { border-top: 1px solid var(--line); }
@@ -204,8 +213,35 @@
 <a href="#about">about</a>
 <a href="#contact">contact</a>
 </div>
+<button aria-expanded="false" aria-label="Toggle menu" class="nav-toggle" type="button">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><line x1="3" x2="21" y1="6" y2="6"></line><line x1="3" x2="21" y1="12" y2="12"></line><line x1="3" x2="21" y1="18" y2="18"></line></svg>
+</button>
 </div>
 </nav>
+<script>
+(function () {
+  var btn = document.querySelector('.nav-toggle');
+  var links = document.querySelector('.nav-links');
+  if (!btn || !links) return;
+  btn.addEventListener('click', function () {
+    var open = links.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  links.addEventListener('click', function (e) {
+    if (e.target.tagName === 'A') {
+      links.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+  document.addEventListener('click', function (e) {
+    if (!links.classList.contains('open')) return;
+    if (!links.contains(e.target) && !btn.contains(e.target)) {
+      links.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+})();
+</script>
 <main id="top">
 <section class="hero">
 <div class="wrap">
